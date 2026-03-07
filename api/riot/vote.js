@@ -66,6 +66,8 @@ export default async function handler(req, res) {
     `;
 
     await sql`ALTER TABLE riot_votes ADD COLUMN IF NOT EXISTS wallet TEXT DEFAULT ''`;
+    await sql`ALTER TABLE riot_fighters ADD COLUMN IF NOT EXISTS class TEXT DEFAULT ''`;
+    await sql`ALTER TABLE riot_fighters ADD COLUMN IF NOT EXISTS image TEXT DEFAULT ''`;
 
     await sql`
       CREATE TABLE IF NOT EXISTS riot_vote_limits (

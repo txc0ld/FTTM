@@ -22,6 +22,8 @@ export default async function handler(req, res) {
         updated_at TIMESTAMPTZ DEFAULT NOW()
       )
     `;
+    await sql`ALTER TABLE riot_fighters ADD COLUMN IF NOT EXISTS class TEXT DEFAULT ''`;
+    await sql`ALTER TABLE riot_fighters ADD COLUMN IF NOT EXISTS image TEXT DEFAULT ''`;
 
     const rows = await sql`
       SELECT fighter_key, token_id, is_evader, image, class, wins, losses
