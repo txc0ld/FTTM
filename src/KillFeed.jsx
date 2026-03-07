@@ -65,7 +65,7 @@ export default function KillFeed({ mobile }) {
 
   if (!data && loading) {
     return (
-      <div style={{ padding: mobile ? 16 : 40, width: "100%" }}>
+      <div style={{ padding: mobile ? 16 : 40, width: "100%", boxSizing: "border-box" }}>
         <div style={{ fontSize: mobile ? 28 : 48, fontFamily: `"${HEADING_FONT}", serif`, marginBottom: 16 }}>
           KILL FEED
         </div>
@@ -78,7 +78,7 @@ export default function KillFeed({ mobile }) {
 
   if (!data && error) {
     return (
-      <div style={{ padding: mobile ? 16 : 40, width: "100%" }}>
+      <div style={{ padding: mobile ? 16 : 40, width: "100%", boxSizing: "border-box" }}>
         <div style={{ fontSize: mobile ? 28 : 48, fontFamily: `"${HEADING_FONT}", serif`, marginBottom: 16 }}>
           KILL FEED
         </div>
@@ -108,7 +108,7 @@ export default function KillFeed({ mobile }) {
   ];
 
   return (
-    <div style={{ padding: mobile ? 16 : 40, width: "100%", display: "flex", flexDirection: "column", gap: 24 }}>
+    <div style={{ padding: mobile ? 16 : 40, width: "100%", boxSizing: "border-box", overflow: "hidden", display: "flex", flexDirection: "column", gap: 24 }}>
       {/* TICKER */}
       {ticker.length > 0 && (
         <div
@@ -252,11 +252,12 @@ export default function KillFeed({ mobile }) {
                 style={{
                   display: "flex",
                   alignItems: "center",
-                  gap: mobile ? 8 : 16,
+                  gap: mobile ? 6 : 16,
                   border: `2px solid ${fg}`,
-                  padding: mobile ? 8 : 12,
+                  padding: mobile ? "8px 6px" : 12,
                   background: k.rank <= 3 ? fg : "transparent",
                   color: k.rank <= 3 ? bg : fg,
+                  overflow: "hidden",
                 }}
               >
                 {/* Rank */}
@@ -407,11 +408,12 @@ export default function KillFeed({ mobile }) {
               style={{
                 display: "flex",
                 alignItems: "center",
-                gap: mobile ? 8 : 16,
+                gap: mobile ? 6 : 16,
                 border: `2px solid ${fg}`,
-                padding: mobile ? 8 : 12,
+                padding: mobile ? "8px 6px" : 12,
                 background: a.rank <= 3 ? fg : "transparent",
                 color: a.rank <= 3 ? bg : fg,
+                overflow: "hidden",
               }}
             >
               <div style={{
