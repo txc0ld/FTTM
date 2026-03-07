@@ -3,7 +3,7 @@ import { useTheme } from "./shared/theme";
 const HEADING_FONT = "Bajern";
 const BODY_FONT = "DeptBody";
 const CONTRACT = "0x4f249b2dc6cecbd549a0c354bbfc4919e8c5d3ae";
-const ALCHEMY_BASE = "https://eth-mainnet.g.alchemy.com/nft/v3/demo";
+const ALCHEMY_BASE = "https://eth-mainnet.g.alchemy.com/nft/v3/WgO0U6P7fqu1fJNQoDFos";
 
 function cyrb53(str, seed = 0) {
   let h1 = 0xdeadbeef ^ seed, h2 = 0x41c6ce57 ^ seed;

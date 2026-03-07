@@ -5,8 +5,8 @@ const HEADING_FONT = "Bajern";
 const BODY_FONT = "DeptBody";
 const CONTRACT = "0x4f249b2dc6cecbd549a0c354bbfc4919e8c5d3ae";
 const EVADER_CONTRACT = "0x075f90ff6b89a1c164fb352bebd0a16f55804ca2";
-const ALCHEMY_BASE = "https://eth-mainnet.g.alchemy.com/nft/v3/demo";
-const ALCHEMY_CORE = "https://eth-mainnet.g.alchemy.com/v2/demo";
+const ALCHEMY_BASE = "https://eth-mainnet.g.alchemy.com/nft/v3/WgO0U6P7fqu1fJNQoDFos";
+const ALCHEMY_CORE = "https://eth-mainnet.g.alchemy.com/v2/WgO0U6P7fqu1fJNQoDFos";
 const ENS_REVERSE_RECORDS = "0x3671aE578E63FdF66ad4F3E12CC0c0d71Ac7510C";
 
 /* ═══════════════════════════════════════

@@ -20,7 +20,7 @@ export default function IrsWatchdog({ mobile, ownedNFTs, selectNFT, setView, wal
   });
 
   const CONTRACT = "0x4f249b2dc6cecbd549a0c354bbfc4919e8c5d3ae";
-  const ALCHEMY_BASE = "https://eth-mainnet.g.alchemy.com/nft/v3/demo";
+  const ALCHEMY_BASE = "https://eth-mainnet.g.alchemy.com/nft/v3/WgO0U6P7fqu1fJNQoDFos";
 
   const scrapeContract = async () => {
     setIsScraping(true);

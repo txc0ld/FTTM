@@ -3,7 +3,7 @@ import { useTheme } from "./shared/theme";
 const HEADING_FONT = "Bajern";
 const BODY_FONT = "DeptBody";
 const EVADER_CONTRACT = "0x075f90ff6b89a1c164fb352bebd0a16f55804ca2";
-const ALCHEMY_BASE = "https://eth-mainnet.g.alchemy.com/nft/v3/demo";
+const ALCHEMY_BASE = "https://eth-mainnet.g.alchemy.com/nft/v3/WgO0U6P7fqu1fJNQoDFos";
 
 const LS_KEY = "dt_boneyard_cache";
 const TWELVE_HOURS = 12 * 60 * 60 * 1000;

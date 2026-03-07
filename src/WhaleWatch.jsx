@@ -4,7 +4,7 @@ import { useTheme } from "./shared/theme";
 const HEADING_FONT = "Bajern";
 const BODY_FONT = "DeptBody";
 const CONTRACT = "0x4f249b2dc6cecbd549a0c354bbfc4919e8c5d3ae";
-const ALCHEMY_BASE = "https://eth-mainnet.g.alchemy.com/nft/v3/demo";
+const ALCHEMY_BASE = "https://eth-mainnet.g.alchemy.com/nft/v3/WgO0U6P7fqu1fJNQoDFos";
 const LS_KEY = "dt_owners_cache";
 const FOUR_HOURS = 4 * 60 * 60 * 1000;
 
