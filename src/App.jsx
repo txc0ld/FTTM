@@ -3084,6 +3084,7 @@ export default function App() {
 
   const [gifExporting, setGifExporting] = useState(false);
   const [gifPreviewUrl, setGifPreviewUrl] = useState(null);
+  const [fullPreview, setFullPreview] = useState(null); // data URL for full-size preview modal
 
   const dl = async () => {
     const c = cvs.current;
@@ -4117,22 +4118,43 @@ export default function App() {
           >
             <canvas
               ref={cvs}
+              onClick={() => {
+                const c = cvs.current;
+                if (!c) return;
+                if (tpl === "wasted" && gifPreviewUrl) {
+                  setFullPreview(gifPreviewUrl);
+                  return;
+                }
+                const tmp = document.createElement("canvas");
+                tmp.width = c.width;
+                tmp.height = c.height;
+                const tctx = tmp.getContext("2d");
+                if (!transparentBg) {
+                  tctx.fillStyle = bgColor;
+                  tctx.fillRect(0, 0, tmp.width, tmp.height);
+                }
+                tctx.drawImage(c, 0, 0);
+                setFullPreview(tmp.toDataURL("image/png"));
+              }}
               style={{
                 width: "100%",
                 maxWidth: 420,
                 height: "auto",
                 display: gifPreviewUrl ? "none" : "block",
+                cursor: "pointer",
               }}
             />
             {gifPreviewUrl && (
               <img
                 src={gifPreviewUrl}
                 alt="GIF Preview"
+                onClick={() => setFullPreview(gifPreviewUrl)}
                 style={{
                   width: "100%",
                   maxWidth: 420,
                   height: "auto",
                   display: "block",
+                  cursor: "pointer",
                 }}
               />
             )}
@@ -4251,6 +4273,39 @@ export default function App() {
       </div>
         </div>
       </div>
+
+      {/* ── FULL PREVIEW MODAL ── */}
+      {fullPreview && (
+        <div
+          onClick={() => setFullPreview(null)}
+          style={{
+            position: "fixed", top: 0, left: 0, right: 0, bottom: 0,
+            background: "rgba(0,0,0,0.85)", zIndex: 99999,
+            display: "flex", alignItems: "center", justifyContent: "center",
+            cursor: "pointer", padding: 20,
+          }}
+        >
+          <img
+            src={fullPreview}
+            alt="Full Preview"
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              maxWidth: "90vw", maxHeight: "90vh",
+              objectFit: "contain",
+              border: `3px solid ${uiFg}`,
+              boxShadow: `0 0 40px rgba(0,0,0,0.5)`,
+              cursor: "default",
+            }}
+          />
+          <div style={{
+            position: "absolute", top: 20, right: 30,
+            color: "#fff", fontSize: 36, fontWeight: 800,
+            cursor: "pointer", fontFamily: `"${HEADING_FONT}", serif`,
+          }}>
+            X
+          </div>
+        </div>
+      )}
     </div>
   );
 }
