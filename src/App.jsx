@@ -4152,6 +4152,7 @@ export default function App() {
                 height: "auto",
                 display: gifPreviewUrl ? "none" : "block",
                 cursor: "pointer",
+                background: transparentBg ? "#1a1a1a" : bgColor,
               }}
             />
             {gifPreviewUrl && (
@@ -4165,6 +4166,7 @@ export default function App() {
                   height: "auto",
                   display: "block",
                   cursor: "pointer",
+                  background: "#1a1a1a",
                 }}
               />
             )}
@@ -4305,6 +4307,7 @@ export default function App() {
               border: `3px solid ${uiFg}`,
               boxShadow: `0 0 40px rgba(0,0,0,0.5)`,
               cursor: "default",
+              background: bgColor || "#1a1a1a",
             }}
           />
           <div style={{
