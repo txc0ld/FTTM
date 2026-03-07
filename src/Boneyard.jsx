@@ -27,11 +27,11 @@ function parseEvaderMeta(nft) {
     if (a.trait_type) attrs[a.trait_type.toLowerCase()] = a.value;
   });
   const tokenId = nft.tokenId || "0";
-  // Prefer full-quality Alchemy CDN over compressed thumbnails
+  // Prefer IPFS original — Alchemy CDN strips backgrounds on grayscale evaders
   const candidates = [
+    nft.image?.originalUrl,
     nft.image?.cachedUrl,
     nft.image?.pngUrl,
-    nft.image?.originalUrl,
     nft.image?.thumbnailUrl,
     nft.raw?.metadata?.image,
   ];

@@ -146,7 +146,13 @@ async function fetchEvaderById(tokenId) {
   if (!res.ok) throw new Error(`API ${res.status}`);
   const nft = await res.json();
   if (!nft.tokenId && !nft.id?.tokenId) throw new Error("Evader not found");
-  return parseMeta(nft);
+  const parsed = parseMeta(nft);
+  // Prefer IPFS original over Alchemy CDN — CDN strips backgrounds on grayscale evaders
+  const ipfsImage =
+    nft.image?.originalUrl ||
+    (nft.raw?.metadata?.image || "").replace("ipfs://", "https://ipfs.io/ipfs/");
+  if (ipfsImage) parsed.image = ipfsImage;
+  return parsed;
 }
 
 function loadImage(src) {
@@ -4139,9 +4145,10 @@ export default function App() {
                 tmp.width = c.width;
                 tmp.height = c.height;
                 const tctx = tmp.getContext("2d");
-                // Always fill a background for preview (dark for transparent mode)
-                tctx.fillStyle = transparentBg ? "#1a1a1a" : bgColor;
-                tctx.fillRect(0, 0, tmp.width, tmp.height);
+                if (!transparentBg) {
+                  tctx.fillStyle = bgColor;
+                  tctx.fillRect(0, 0, tmp.width, tmp.height);
+                }
                 tctx.drawImage(c, 0, 0);
                 setFullPreview(tmp.toDataURL("image/png"));
               }}
@@ -4151,7 +4158,6 @@ export default function App() {
                 height: "auto",
                 display: gifPreviewUrl ? "none" : "block",
                 cursor: "pointer",
-                background: "#1a1a1a",
               }}
             />
             {gifPreviewUrl && (
@@ -4165,7 +4171,6 @@ export default function App() {
                   height: "auto",
                   display: "block",
                   cursor: "pointer",
-                  background: "#1a1a1a",
                 }}
               />
             )}
