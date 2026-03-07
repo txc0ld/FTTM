@@ -1,7 +1,8 @@
 import { useRef, useEffect } from "react";
+import { useTheme } from "./shared/theme";
 
-const BG = "#dfff00";
-const BK = "#000000";
+const BRAND_BG = "#dfff00";
+const BRAND_BK = "#000000";
 const HEADING_FONT = "Bajern";
 const BODY_FONT = "DeptBody";
 const W = 1200;
@@ -9,18 +10,18 @@ const H = 630;
 
 function drawShareCard(ctx, nft, walletCount) {
   // Background
-  ctx.fillStyle = BG;
+  ctx.fillStyle = BRAND_BG;
   ctx.fillRect(0, 0, W, H);
 
   // Border
-  ctx.strokeStyle = BK;
+  ctx.strokeStyle = BRAND_BK;
   ctx.lineWidth = 8;
   ctx.strokeRect(4, 4, W - 8, H - 8);
   ctx.lineWidth = 2;
   ctx.strokeRect(16, 16, W - 32, H - 32);
 
   // Header
-  ctx.fillStyle = BK;
+  ctx.fillStyle = BRAND_BK;
   ctx.font = `bold 64px "${HEADING_FONT}", serif`;
   ctx.textAlign = "left";
   ctx.textBaseline = "top";
@@ -34,12 +35,12 @@ function drawShareCard(ctx, nft, walletCount) {
 
   if (nft) {
     // NFT image placeholder area
-    ctx.strokeStyle = BK;
+    ctx.strokeStyle = BRAND_BK;
     ctx.lineWidth = 4;
     ctx.strokeRect(40, 180, 360, 360);
 
     ctx.font = `bold 48px "${HEADING_FONT}", serif`;
-    ctx.fillStyle = BK;
+    ctx.fillStyle = BRAND_BK;
     ctx.textAlign = "left";
     ctx.fillText(`CITIZEN #${nft.id}`, 430, 200);
 
@@ -52,20 +53,20 @@ function drawShareCard(ctx, nft, walletCount) {
     if (nft.inAudit) {
       ctx.fillStyle = "#8b1a1a";
       ctx.fillRect(430, 350, 200, 36);
-      ctx.fillStyle = BG;
+      ctx.fillStyle = BRAND_BG;
       ctx.font = `bold 20px "${BODY_FONT}", monospace`;
       ctx.fillText("IN AUDIT", 440, 358);
     } else if (nft.taxDue) {
-      ctx.fillStyle = BK;
+      ctx.fillStyle = BRAND_BK;
       ctx.fillRect(430, 350, 200, 36);
-      ctx.fillStyle = BG;
+      ctx.fillStyle = BRAND_BG;
       ctx.font = `bold 20px "${BODY_FONT}", monospace`;
       ctx.fillText("TAX DUE", 440, 358);
     } else {
-      ctx.strokeStyle = BK;
+      ctx.strokeStyle = BRAND_BK;
       ctx.lineWidth = 2;
       ctx.strokeRect(430, 350, 120, 36);
-      ctx.fillStyle = BK;
+      ctx.fillStyle = BRAND_BK;
       ctx.font = `bold 20px "${BODY_FONT}", monospace`;
       ctx.fillText("CLEAR", 440, 358);
     }
@@ -73,14 +74,14 @@ function drawShareCard(ctx, nft, walletCount) {
 
   // Wallet info
   if (walletCount > 0) {
-    ctx.fillStyle = BK;
+    ctx.fillStyle = BRAND_BK;
     ctx.font = `bold 22px "${BODY_FONT}", monospace`;
     ctx.textAlign = "left";
     ctx.fillText(`WALLET HOLDS ${walletCount} CITIZEN${walletCount !== 1 ? "S" : ""}`, 430, 440);
   }
 
   // Footer
-  ctx.fillStyle = BK;
+  ctx.fillStyle = BRAND_BK;
   ctx.fillRect(40, H - 80, W - 80, 4);
   ctx.font = `bold 18px "${BODY_FONT}", monospace`;
   ctx.textAlign = "center";
@@ -88,6 +89,9 @@ function drawShareCard(ctx, nft, walletCount) {
 }
 
 export default function ShareCard({ nft, walletCount, onClose, mobile }) {
+  const { colors } = useTheme();
+  const BG = colors.bg;
+  const BK = colors.fg;
   const canvasRef = useRef(null);
 
   useEffect(() => {
@@ -104,7 +108,7 @@ export default function ShareCard({ nft, walletCount, onClose, mobile }) {
       img.onload = () => {
         const ctx = c.getContext("2d");
         ctx.drawImage(img, 40, 180, 360, 360);
-        ctx.strokeStyle = BK;
+        ctx.strokeStyle = BRAND_BK;
         ctx.lineWidth = 4;
         ctx.strokeRect(40, 180, 360, 360);
       };

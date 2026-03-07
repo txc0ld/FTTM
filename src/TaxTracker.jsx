@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+import { useTheme } from "./shared/theme";
 
-const BG = "#dfff00";
-const BK = "#000000";
 const BODY_FONT = "DeptBody";
 const HEADING_FONT = "Bajern";
 
@@ -20,6 +19,9 @@ const STATUS_LABELS = {
 };
 
 export default function TaxTracker({ mobile, wallet, setWallet, ownedNFTs, handleWalletFetch, loading, error }) {
+  const { colors } = useTheme();
+  const BG = colors.bg;
+  const BK = colors.fg;
   const [taxData, setTaxData] = useState(null);
   const [taxLoading, setTaxLoading] = useState(false);
   const [taxError, setTaxError] = useState("");
@@ -265,16 +267,17 @@ export default function TaxTracker({ mobile, wallet, setWallet, ownedNFTs, handl
 }
 
 function SummaryCell({ label, value, color }) {
+  const { colors } = useTheme();
   return (
     <div
       style={{
         textAlign: "center",
         padding: 12,
-        borderRight: `1px solid ${BK}22`,
+        borderRight: `1px solid ${colors.fg}22`,
       }}
     >
       <div style={{ fontSize: 11, letterSpacing: 1, opacity: 0.6, marginBottom: 4 }}>{label}</div>
-      <div style={{ fontSize: 28, fontWeight: 700, color: color || BK, fontFamily: `"${HEADING_FONT}", serif` }}>
+      <div style={{ fontSize: 28, fontWeight: 700, color: color || colors.fg, fontFamily: `"${HEADING_FONT}", serif` }}>
         {value}
       </div>
     </div>
@@ -282,6 +285,9 @@ function SummaryCell({ label, value, color }) {
 }
 
 function CitizenRow({ citizen, mobile }) {
+  const { colors } = useTheme();
+  const BG = colors.bg;
+  const BK = colors.fg;
   const c = citizen;
   const statusColor = STATUS_COLORS[c.status] || BK;
   const statusLabel = STATUS_LABELS[c.status] || c.status;

@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useTheme } from "./shared/theme";
+import { useSound } from "./shared/sound";
 
 const HEADING_FONT = "Bajern";
 const BODY_FONT = "DeptBody";
@@ -29,6 +30,7 @@ function getBadge(count) {
 
 export default function WhaleWatch({ mobile }) {
   const { colors } = useTheme();
+  const { playClick, playStaticBuzz } = useSound();
   const [owners, setOwners] = useState([]);
   const [loading, setLoading] = useState(false);
   const [progress, setProgress] = useState("");
@@ -147,7 +149,7 @@ export default function WhaleWatch({ mobile }) {
             </div>
           </div>
           <button
-            onClick={() => fetchOwners(false)}
+            onClick={() => { fetchOwners(false); playStaticBuzz(); }}
             disabled={loading}
             style={{
               background: loading ? fg : bg,
@@ -250,7 +252,7 @@ export default function WhaleWatch({ mobile }) {
         <div style={{ textAlign: "center", padding: 40, fontSize: 20, fontWeight: 600, border: `2px dashed ${fg}` }}>
           NO DATA YET.
           <button
-            onClick={() => fetchOwners(false)}
+            onClick={() => { fetchOwners(false); playStaticBuzz(); }}
             style={{
               display: "block",
               margin: "16px auto 0",

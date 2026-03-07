@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useTheme } from "./shared/theme";
+import { useSound } from "./shared/sound";
 
 const HEADING_FONT = "Bajern";
 const BODY_FONT = "DeptBody";
@@ -32,6 +33,7 @@ function saveCache(data) {
 
 export default function KillFeed({ mobile }) {
   const { colors } = useTheme();
+  const { playClick, playStaticBuzz } = useSound();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -112,7 +114,7 @@ export default function KillFeed({ mobile }) {
       {/* TICKER */}
       {ticker.length > 0 && (
         <div
-          onClick={() => setPaused((p) => !p)}
+          onClick={() => { setPaused((p) => !p); playClick(); }}
           style={{
             overflow: "hidden",
             border: `3px solid ${fg}`,
@@ -177,7 +179,7 @@ export default function KillFeed({ mobile }) {
         {["KILLS", "AUDITS"].map((t) => (
           <button
             key={t}
-            onClick={() => { setTab(t); setViewMode("LEADERBOARD"); }}
+            onClick={() => { setTab(t); setViewMode("LEADERBOARD"); playClick(); }}
             style={{
               background: tab === t ? fg : "transparent",
               color: tab === t ? bg : fg,
@@ -197,7 +199,7 @@ export default function KillFeed({ mobile }) {
         {["LEADERBOARD", "RECENT"].map((v) => (
           <button
             key={v}
-            onClick={() => setViewMode(v)}
+            onClick={() => { setViewMode(v); playClick(); }}
             style={{
               background: viewMode === v ? fg : "transparent",
               color: viewMode === v ? bg : fg,
@@ -213,7 +215,7 @@ export default function KillFeed({ mobile }) {
           </button>
         ))}
         <button
-          onClick={fetchData}
+          onClick={() => { fetchData(); playStaticBuzz(); }}
           disabled={loading}
           style={{
             background: "transparent",

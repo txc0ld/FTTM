@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useTheme } from "./shared/theme";
+import { useSound } from "./shared/sound";
 const HEADING_FONT = "Bajern";
 const BODY_FONT = "DeptBody";
 const EVADER_CONTRACT = "0x075f90ff6b89a1c164fb352bebd0a16f55804ca2";
@@ -115,6 +116,7 @@ function EvaderImg({ src, id, style, loading: lazy }) {
 
 export default function Boneyard({ mobile }) {
   const { colors } = useTheme();
+  const { playClick, playStaticBuzz } = useSound();
   const BG = colors.bg;
   const BK = colors.fg;
   const [tokens, setTokens] = useState([]);
@@ -235,7 +237,7 @@ export default function Boneyard({ mobile }) {
             </div>
           </div>
           <button
-            onClick={doFetch}
+            onClick={() => { doFetch(); playStaticBuzz(); }}
             disabled={loading}
             style={{
               background: loading ? BK : BG,
@@ -307,7 +309,7 @@ export default function Boneyard({ mobile }) {
           {["GRID", "TIMELINE", "STATS"].map((sv) => (
             <button
               key={sv}
-              onClick={() => setSubView(sv)}
+              onClick={() => { setSubView(sv); playClick(); }}
               style={{
                 background: subView === sv ? BK : "transparent",
                 color: subView === sv ? BG : BK,

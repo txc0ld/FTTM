@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useTheme } from "./shared/theme";
+import { useSound } from "./shared/sound";
 
 const HEADING_FONT = "Bajern";
 const BODY_FONT = "DeptBody";
@@ -24,6 +25,7 @@ function saveCensusCache(data) {
 
 export default function Census({ mobile }) {
   const { colors } = useTheme();
+  const { playClick, playStaticBuzz } = useSound();
   const [tab, setTab] = useState("POPULATION");
   const [contractMeta, setContractMeta] = useState(null);
   const [classes, setClasses] = useState(null);
@@ -216,7 +218,7 @@ export default function Census({ mobile }) {
         {["POPULATION", "CLASS", "INSURANCE"].map((t) => (
           <button
             key={t}
-            onClick={() => setTab(t)}
+            onClick={() => { setTab(t); playClick(); }}
             style={{
               background: tab === t ? fg : "transparent",
               color: tab === t ? bg : fg,
@@ -258,7 +260,7 @@ export default function Census({ mobile }) {
           {!classes ? (
             <div style={{ textAlign: "center", padding: 40 }}>
               <button
-                onClick={scrapeClasses}
+                onClick={() => { scrapeClasses(); playStaticBuzz(); }}
                 disabled={loading}
                 style={{
                   background: loading ? fg : bg,
@@ -293,7 +295,7 @@ export default function Census({ mobile }) {
                   {elimTotal} ELIMINATED (RED OVERLAY)
                 </span>
                 <button
-                  onClick={scrapeClasses}
+                  onClick={() => { scrapeClasses(); playStaticBuzz(); }}
                   disabled={loading}
                   style={{
                     background: "transparent",
@@ -331,7 +333,7 @@ export default function Census({ mobile }) {
                 RUN THE CLASS CENSUS FIRST TO GATHER INSURANCE DATA.
               </div>
               <button
-                onClick={() => { setTab("CLASS"); if (!classes) scrapeClasses(); }}
+                onClick={() => { setTab("CLASS"); if (!classes) scrapeClasses(); playClick(); }}
                 style={{
                   background: fg,
                   color: bg,
