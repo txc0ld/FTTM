@@ -2974,7 +2974,7 @@ export default function App() {
 
         // Fallback: construct IPFS URL directly (known CID pattern for evader images)
         if (!evUrl) {
-          evUrl = `https://nftstorage.link/ipfs/QmPLLa1FwoyA3rDH3GuHZ3zgZWew6EUJcSDTztVCs17oii/citizen-${cid}.png`;
+          evUrl = `https://ipfs.io/ipfs/QmPLLa1FwoyA3rDH3GuHZ3zgZWew6EUJcSDTztVCs17oii/citizen-${cid}.png`;
         }
 
         if (cancelled) return;
