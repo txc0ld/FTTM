@@ -26,8 +26,8 @@ export default async function handler(req, res) {
     const epoch = getEpoch();
     const walletLower = wallet.toLowerCase();
 
-    // Verify signature
-    const message = `RIOT VOTE\nEpoch: ${epoch}\nWinner: ${winner.id}\nLoser: ${loser.id}`;
+    // Verify session signature (signed once on wallet connect)
+    const message = `RIOT CLUB SESSION\nEpoch: ${epoch}`;
     let recovered;
     try {
       recovered = verifyMessage(message, signature).toLowerCase();

@@ -263,6 +263,7 @@ export default function DailyRiot({ mobile, ownedNFTs, wallet, setWallet, handle
 
   // ── WALLET AUTH ──
   const [riotWallet, setRiotWallet] = useState(null);
+  const [riotSig, setRiotSig] = useState(null); // session signature, signed once on connect
   const [walletConnecting, setWalletConnecting] = useState(false);
   const [voteError, setVoteError] = useState("");
 
@@ -410,8 +411,18 @@ export default function DailyRiot({ mobile, ownedNFTs, wallet, setWallet, handle
       const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
       if (accounts[0]) {
         const addr = accounts[0].toLowerCase();
+        // Sign once per session — covers all votes for this epoch
+        const msPerDay = 1000 * 60 * 60 * 24;
+        const offset19H = 19 * 60 * 60 * 1000;
+        const ep = epoch >= 0 ? epoch : Math.floor((Date.now() - offset19H) / msPerDay);
+        const message = `RIOT CLUB SESSION\nEpoch: ${ep}`;
+        const sig = await window.ethereum.request({
+          method: "personal_sign",
+          params: [message, addr],
+        });
         setRiotWallet(addr);
-        await syncVotesFromServer(addr, epoch);
+        setRiotSig(sig);
+        await syncVotesFromServer(addr, ep);
       }
     } catch {
       setRiotError("WALLET CONNECTION REJECTED.");
@@ -421,6 +432,7 @@ export default function DailyRiot({ mobile, ownedNFTs, wallet, setWallet, handle
 
   const disconnectRiotWallet = () => {
     setRiotWallet(null);
+    setRiotSig(null);
   };
 
   /* ═══════════════════════════════════════
@@ -431,20 +443,8 @@ export default function DailyRiot({ mobile, ownedNFTs, wallet, setWallet, handle
     const offset19H = 19 * 60 * 60 * 1000;
     const calcEpoch = Math.floor((Date.now() - offset19H) / msPerDay);
 
-    // Auto-connect wallet if previously authorized
-    (async () => {
-      if (window.ethereum) {
-        try {
-          const accounts = await window.ethereum.request({ method: "eth_accounts" });
-          if (accounts[0]) {
-            const addr = accounts[0].toLowerCase();
-            setRiotWallet(addr);
-            await syncVotesFromServer(addr, calcEpoch);
-          }
-        } catch {}
-      }
-      setEpoch(calcEpoch);
-    })();
+    // No auto-connect — user must click Connect Wallet to sign session
+    setEpoch(calcEpoch);
 
     fetchLeaderboard();
     loadStreak(calcEpoch);
@@ -542,30 +542,18 @@ export default function DailyRiot({ mobile, ownedNFTs, wallet, setWallet, handle
      ═══════════════════════════════════════ */
   const handleVote = async (winner, loser) => {
     setVoteError("");
-    if (!riotWallet) {
+    if (!riotWallet || !riotSig) {
       setVoteError("CONNECT WALLET TO VOTE.");
       return;
     }
 
-    // Sign the vote with MetaMask
-    const message = `RIOT VOTE\nEpoch: ${epoch}\nWinner: ${winner.id}\nLoser: ${loser.id}`;
-    let signature;
-    try {
-      signature = await window.ethereum.request({
-        method: "personal_sign",
-        params: [message, riotWallet],
-      });
-    } catch {
-      return; // User rejected signing
-    }
-
-    // Submit to server for verification + vote limit enforcement
+    // Submit to server with session signature (signed once on connect)
     let serverData;
     try {
       const res = await fetch("/api/riot/vote", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ winner, loser, wallet: riotWallet, signature }),
+        body: JSON.stringify({ winner, loser, wallet: riotWallet, signature: riotSig }),
       });
       serverData = await res.json();
       if (!res.ok) {
