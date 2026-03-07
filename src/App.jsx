@@ -4139,10 +4139,9 @@ export default function App() {
                 tmp.width = c.width;
                 tmp.height = c.height;
                 const tctx = tmp.getContext("2d");
-                if (!transparentBg) {
-                  tctx.fillStyle = bgColor;
-                  tctx.fillRect(0, 0, tmp.width, tmp.height);
-                }
+                // Always fill a background for preview (dark for transparent mode)
+                tctx.fillStyle = transparentBg ? "#1a1a1a" : bgColor;
+                tctx.fillRect(0, 0, tmp.width, tmp.height);
                 tctx.drawImage(c, 0, 0);
                 setFullPreview(tmp.toDataURL("image/png"));
               }}
@@ -4152,7 +4151,7 @@ export default function App() {
                 height: "auto",
                 display: gifPreviewUrl ? "none" : "block",
                 cursor: "pointer",
-                background: transparentBg ? "#1a1a1a" : bgColor,
+                background: "#1a1a1a",
               }}
             />
             {gifPreviewUrl && (
@@ -4307,7 +4306,6 @@ export default function App() {
               border: `3px solid ${uiFg}`,
               boxShadow: `0 0 40px rgba(0,0,0,0.5)`,
               cursor: "default",
-              background: bgColor || "#1a1a1a",
             }}
           />
           <div style={{
