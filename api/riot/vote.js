@@ -151,6 +151,6 @@ export default async function handler(req, res) {
     });
   } catch (e) {
     console.error("Vote error:", e);
-    return res.status(500).json({ error: "Failed to record vote" });
+    return res.status(500).json({ error: "Failed to record vote", detail: e.message });
   }
 }

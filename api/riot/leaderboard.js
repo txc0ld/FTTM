@@ -33,6 +33,6 @@ export default async function handler(req, res) {
     return res.status(200).json({ fighters: rows });
   } catch (e) {
     console.error("Leaderboard error:", e);
-    return res.status(500).json({ error: "Failed to fetch leaderboard" });
+    return res.status(500).json({ error: "Failed to fetch leaderboard", detail: e.message });
   }
 }
