@@ -6,6 +6,7 @@ import Boneyard from "./Boneyard";
 import KillFeed from "./KillFeed";
 import WhaleWatch from "./WhaleWatch";
 import Census from "./Census";
+import TaxTracker from "./TaxTracker";
 import ShareCard from "./ShareCard";
 import { useTheme } from "./shared/theme";
 import { useSound } from "./shared/sound";
@@ -3329,7 +3330,7 @@ export default function App() {
           }}
           onClick={() => navTo("registry")}
         >
-          {view === "riot" ? "riot club" : view === "watchdog" ? "irs watchdog" : view === "citizenship" ? "the citizenship" : view === "boneyard" ? "the boneyard" : view === "killfeed" ? "kill feed" : view === "whalewatch" ? "whale watch" : view === "census" ? "census bureau" : "reaper registry"}
+          {view === "riot" ? "riot club" : view === "watchdog" ? "irs watchdog" : view === "citizenship" ? "the citizenship" : view === "boneyard" ? "the boneyard" : view === "killfeed" ? "kill feed" : view === "whalewatch" ? "whale watch" : view === "census" ? "census bureau" : view === "taxtracker" ? "tax tracker" : "reaper registry"}
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           <div style={{ fontSize: mobile ? 11 : 14, fontWeight: 400, textAlign: "right", fontFamily: `"${BODY_FONT}", monospace`, opacity: 0.6, lineHeight: 1.3 }}>
@@ -3424,6 +3425,7 @@ export default function App() {
               ]},
               { id: null, label: "REPORTS", children: [
                 { id: "census", label: "CENSUS" },
+                { id: "taxtracker", label: "TAX TRACKER" },
               ]},
               { id: "citizenship", label: "CITIZENSHIP" },
             ].map((item, idx) => (
@@ -3504,7 +3506,7 @@ export default function App() {
       )}
 
       {/* MAIN CONTENT AREA */}
-      <div style={{ display: "flex", flex: 1 }}>
+      <div style={{ display: "flex", flex: 1, minWidth: 0 }}>
 
       {/* DESKTOP SIDEBAR NAV */}
       {!mobile && (
@@ -3608,34 +3610,40 @@ export default function App() {
               display: "flex",
               justifyContent: "space-between",
               alignItems: "center",
-              background: view === "census" ? `${uiFg}15` : "transparent",
+              background: ["census", "taxtracker"].includes(view) ? `${uiFg}15` : "transparent",
               transition: "all 0.15s",
             }}
             onMouseEnter={(e) => { e.currentTarget.style.background = `${uiFg}11`; }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = view === "census" ? `${uiFg}15` : "transparent"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = ["census", "taxtracker"].includes(view) ? `${uiFg}15` : "transparent"; }}
           >
             REPORTS
             <span style={{ fontSize: 10, transition: "transform 0.3s ease", transform: reportsOpen ? "rotate(180deg)" : "rotate(0)", display: "inline-block" }}>V</span>
           </div>
-          <div style={{ maxHeight: reportsOpen ? 100 : 0, overflow: "hidden", transition: "max-height 0.3s ease" }}>
-            <div
-              onClick={() => navTo("census")}
-              style={{
-                padding: "10px 20px 10px 32px",
-                cursor: "pointer",
-                fontSize: 13,
-                fontWeight: 400,
-                fontFamily: `"${BODY_FONT}", monospace`,
-                borderBottom: `1px solid ${uiFg}11`,
-                background: view === "census" ? uiFg : "transparent",
-                color: view === "census" ? uiBg : uiFg,
-                transition: "all 0.15s",
-              }}
-              onMouseEnter={(e) => { if (view !== "census") e.currentTarget.style.background = `${uiFg}11`; }}
-              onMouseLeave={(e) => { if (view !== "census") e.currentTarget.style.background = "transparent"; }}
-            >
-              CENSUS
-            </div>
+          <div style={{ maxHeight: reportsOpen ? 200 : 0, overflow: "hidden", transition: "max-height 0.3s ease" }}>
+            {[
+              { id: "census", label: "CENSUS" },
+              { id: "taxtracker", label: "TAX TRACKER" },
+            ].map((n) => (
+              <div
+                key={n.id}
+                onClick={() => navTo(n.id)}
+                style={{
+                  padding: "10px 20px 10px 32px",
+                  cursor: "pointer",
+                  fontSize: 13,
+                  fontWeight: 400,
+                  fontFamily: `"${BODY_FONT}", monospace`,
+                  borderBottom: `1px solid ${uiFg}11`,
+                  background: view === n.id ? uiFg : "transparent",
+                  color: view === n.id ? uiBg : uiFg,
+                  transition: "all 0.15s",
+                }}
+                onMouseEnter={(e) => { if (view !== n.id) e.currentTarget.style.background = `${uiFg}11`; }}
+                onMouseLeave={(e) => { if (view !== n.id) e.currentTarget.style.background = "transparent"; }}
+              >
+                {n.label}
+              </div>
+            ))}
           </div>
 
           {/* CITIZENSHIP */}
@@ -3660,7 +3668,7 @@ export default function App() {
         </div>
       )}
 
-      <div style={{ display: "flex", flexWrap: "wrap", flex: 1 }}>
+      <div style={{ display: "flex", flexWrap: "wrap", flex: 1, minWidth: 0, overflowX: "hidden" }}>
         {view === "riot" ? (
           <DailyRiot mobile={mobile} ownedNFTs={ownedNFTs} wallet={wallet} setWallet={setWallet} handleWalletFetch={handleWalletFetch} loading={loading} error={error} />
         ) : view === "watchdog" ? (
@@ -3675,6 +3683,8 @@ export default function App() {
           <WhaleWatch mobile={mobile} />
         ) : view === "census" ? (
           <Census mobile={mobile} />
+        ) : view === "taxtracker" ? (
+          <TaxTracker mobile={mobile} wallet={wallet} setWallet={setWallet} ownedNFTs={ownedNFTs} handleWalletFetch={handleWalletFetch} loading={loading} error={error} />
         ) : (
           <>
         {/* LEFT PANEL */}

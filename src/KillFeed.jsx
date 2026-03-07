@@ -108,7 +108,7 @@ export default function KillFeed({ mobile }) {
   ];
 
   return (
-    <div style={{ padding: mobile ? 16 : 40, width: "100%", boxSizing: "border-box", overflow: "hidden", display: "flex", flexDirection: "column", gap: 24 }}>
+    <div style={{ padding: mobile ? 16 : 40, width: "100%", maxWidth: "100%", minWidth: 0, boxSizing: "border-box", overflow: "hidden", display: "flex", flexDirection: "column", gap: 24 }}>
       {/* TICKER */}
       {ticker.length > 0 && (
         <div
