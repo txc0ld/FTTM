@@ -1,5 +1,20 @@
+import { JsonRpcProvider } from "ethers";
+
 const OS_CITIZEN_SLUG = "deathandtaxes";
 const OS_EVADER_SLUG = "evaders";
+
+async function resolveAddress(wallet) {
+  if (wallet.startsWith("0x")) return wallet;
+  // Resolve ENS via Alchemy RPC
+  const key = process.env.ALCHEMY_API_KEY;
+  const rpcUrl = key
+    ? `https://eth-mainnet.g.alchemy.com/v3/${key}`
+    : "https://eth.llamarpc.com";
+  const provider = new JsonRpcProvider(rpcUrl);
+  const resolved = await provider.resolveName(wallet);
+  if (!resolved) throw new Error(`Could not resolve ENS name: ${wallet}`);
+  return resolved;
+}
 
 async function fetchOSNfts(wallet, slug, osKey) {
   const nfts = [];
@@ -37,10 +52,13 @@ export default async function handler(req, res) {
   const osKey = process.env.OPENSEA_API_KEY;
   if (!osKey) return res.status(500).json({ error: "OpenSea API key not configured" });
 
-  const wallet = req.query.wallet;
-  if (!wallet) return res.status(400).json({ error: "wallet parameter required" });
+  const walletParam = req.query.wallet;
+  if (!walletParam) return res.status(400).json({ error: "wallet parameter required" });
 
   try {
+    // Resolve ENS names to hex addresses — OpenSea requires 0x addresses
+    const wallet = await resolveAddress(walletParam);
+
     const [citizenResult, evaderResult] = await Promise.allSettled([
       fetchOSNfts(wallet, OS_CITIZEN_SLUG, osKey),
       fetchOSNfts(wallet, OS_EVADER_SLUG, osKey),
