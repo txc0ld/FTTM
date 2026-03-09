@@ -270,7 +270,7 @@ export default async function handler(req, res) {
     const [mainNfts, evaderNfts, bribeBalances, citizenStats, evaderStats, citizenListings, evaderListings, treasuryBalance] = await Promise.all([
       scrapeContract(key, CONTRACT),
       scrapeContract(key, EVADER_CONTRACT),
-      fetchBribeBalances(key, 5000),
+      fetchBribeBalances(key, 6969),
       fetchOpenSeaStats(OS_CITIZEN_SLUG, osKey),
       fetchOpenSeaStats(OS_EVADER_SLUG, osKey),
       fetchListedTokenIds(OS_CITIZEN_SLUG, osKey),
