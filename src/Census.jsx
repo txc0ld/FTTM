@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useTheme } from "./shared/theme";
 import { useSound } from "./shared/sound";
-import { CONTRACT, EVADER_CONTRACT, fetchNFTsForContract, fetchContractMeta as apiFetchContractMeta } from "./shared/api";
+import { CONTRACT, EVADER_CONTRACT, fetchNFTsForContract } from "./shared/api";
 
 const HEADING_FONT = "Bajern";
 const BODY_FONT = "DeptBody";
@@ -24,8 +24,8 @@ function saveCensusCache(data) {
 export default function Census({ mobile }) {
   const { colors } = useTheme();
   const { playClick, playStaticBuzz } = useSound();
-  const [contractMeta, setContractMeta] = useState(null);
-  const [evaderMeta, setEvaderMeta] = useState(null);
+  const [citizenFloor, setCitizenFloor] = useState(null);
+  const [evaderFloor, setEvaderFloor] = useState(null);
   const [classes, setClasses] = useState(null);
   const [classEliminated, setClassEliminated] = useState({});
   const [insuredCount, setInsuredCount] = useState(0);
@@ -55,8 +55,9 @@ export default function Census({ mobile }) {
       if (cached.unbribedCount != null) setUnbribedCount(cached.unbribedCount);
       if (cached.bribedElimCount != null) setBribedElimCount(cached.bribedElimCount);
       if (cached.bribeHolders) setBribeHolders(cached.bribeHolders);
+      if (cached.citizenFloor != null) setCitizenFloor(cached.citizenFloor);
+      if (cached.evaderFloor != null) setEvaderFloor(cached.evaderFloor);
     }
-    fetchContractMetaData();
   }, []);
 
   // Draw bar chart when classes change
@@ -64,17 +65,6 @@ export default function Census({ mobile }) {
     if (!classes || !chartRef.current) return;
     drawChart();
   }, [classes, classEliminated, colors]);
-
-  const fetchContractMetaData = async () => {
-    try {
-      const [main, evader] = await Promise.all([
-        apiFetchContractMeta(CONTRACT),
-        apiFetchContractMeta(EVADER_CONTRACT),
-      ]);
-      setContractMeta(main);
-      setEvaderMeta(evader);
-    } catch {}
-  };
 
   const applyCensusResult = (r) => {
     setClasses(r.classes);
@@ -85,6 +75,8 @@ export default function Census({ mobile }) {
     setUnbribedCount(r.unbribedCount);
     setBribedElimCount(r.bribedElimCount);
     setBribeHolders(r.bribeHolders || []);
+    if (r.citizenFloor != null) setCitizenFloor(r.citizenFloor);
+    if (r.evaderFloor != null) setEvaderFloor(r.evaderFloor);
     saveCensusCache(r);
   };
 
@@ -239,8 +231,6 @@ export default function Census({ mobile }) {
   const totalSupply = classes ? Object.values(classes).reduce((s, v) => s + v, 0) : null;
   const elimCount = Object.values(classEliminated).reduce((s, v) => s + v, 0) || null;
   const livingCount = totalSupply && elimCount ? totalSupply - elimCount : null;
-  const citizenFloor = contractMeta?.openSeaMetadata?.floorPrice || "?";
-  const evaderFloor = evaderMeta?.openSeaMetadata?.floorPrice || "?";
 
   const hasInsurance = insuredCount > 0 || uninsuredCount > 0;
   const hasBribes = bribedCount > 0 || unbribedCount > 0;
@@ -304,8 +294,8 @@ export default function Census({ mobile }) {
           { label: "TOTAL SUPPLY", value: totalSupply || "?" },
           { label: "LIVING", value: livingCount || "?" },
           { label: "ELIMINATED", value: elimCount || "?" },
-          { label: "CITIZEN FLOOR", value: citizenFloor !== "?" ? `${citizenFloor} ETH` : "?" },
-          { label: "EVADER FLOOR", value: evaderFloor !== "?" ? `${evaderFloor} ETH` : "?" },
+          { label: "CITIZEN FLOOR", value: citizenFloor != null ? `${citizenFloor} ETH` : "?" },
+          { label: "EVADER FLOOR", value: evaderFloor != null ? `${evaderFloor} ETH` : "?" },
           { label: "SURVIVAL RATE", value: livingCount && elimCount ? `${((livingCount / (livingCount + elimCount)) * 100).toFixed(1)}%` : "?" },
         ].map((s) => (
           <div key={s.label} style={{ border: `3px solid ${fg}`, padding: mobile ? 16 : 24, textAlign: "center" }}>

@@ -2,6 +2,8 @@ const CONTRACT = "0x4f249b2dc6cecbd549a0c354bbfc4919e8c5d3ae";
 const EVADER_CONTRACT = "0x075f90ff6b89a1c164fb352bebd0a16f55804ca2";
 const GAME_CONTRACT = "0xa448c7f618087dda1a3b128cad8a424fbae4b71f";
 const SEL_BRIBE_BALANCE = "0xca58643b"; // bribeBalance(uint256)
+const OS_CITIZEN_SLUG = "death-and-taxes-citizens";
+const OS_EVADER_SLUG = "evaders";
 
 // In-memory cache (persists across warm invocations)
 let cached = null;
@@ -77,6 +79,19 @@ async function fetchBribeBalances(key, maxTokenId) {
   }
 
   return results;
+}
+
+async function fetchOpenSeaStats(slug, osKey) {
+  if (!osKey) return null;
+  try {
+    const res = await fetch(`https://api.opensea.io/api/v2/collections/${slug}/stats`, {
+      headers: { "x-api-key": osKey },
+    });
+    if (!res.ok) return null;
+    return await res.json();
+  } catch {
+    return null;
+  }
 }
 
 function parseAttrs(nft) {
@@ -184,6 +199,7 @@ export default async function handler(req, res) {
 
   const key = process.env.ALCHEMY_API_KEY;
   if (!key) return res.status(500).json({ error: "API key not configured" });
+  const osKey = process.env.OPENSEA_API_KEY;
 
   // Return cached if fresh
   if (cached && Date.now() - cachedAt < TTL) {
@@ -192,17 +208,19 @@ export default async function handler(req, res) {
   }
 
   try {
-    // Run all three tasks in parallel:
-    // 1. Scrape main contract (class/insurance data)
-    // 2. Scrape evader contract (elimination data)
-    // 3. Query bribe balances for tokens 1-5000 (covers full supply)
-    const [mainNfts, evaderNfts, bribeBalances] = await Promise.all([
+    const [mainNfts, evaderNfts, bribeBalances, citizenStats, evaderStats] = await Promise.all([
       scrapeContract(key, CONTRACT),
       scrapeContract(key, EVADER_CONTRACT),
       fetchBribeBalances(key, 5000),
+      fetchOpenSeaStats(OS_CITIZEN_SLUG, osKey),
+      fetchOpenSeaStats(OS_EVADER_SLUG, osKey),
     ]);
 
     const result = aggregate(mainNfts, evaderNfts, bribeBalances);
+    result.citizenFloor = citizenStats?.total?.floor_price ?? null;
+    result.evaderFloor = evaderStats?.total?.floor_price ?? null;
+    result.citizenOwners = citizenStats?.total?.num_owners ?? null;
+    result.evaderOwners = evaderStats?.total?.num_owners ?? null;
     cached = result;
     cachedAt = Date.now();
 
