@@ -34,6 +34,14 @@
       href="https://www.deptofdeath.xyz/favicon.ico?favicon.02b9ac3f.ico"
     />
     <style>
+      @font-face {
+        font-family: 'GeoNum';
+        font-style: normal;
+        font-weight: 400;
+        font-display: swap;
+        src: url(https://fonts.gstatic.com/s/geo/v23/CSRz4zRZlufVLw.ttf) format('truetype');
+        unicode-range: U+0030-0039, U+002E, U+002C, U+0025;
+      }
       :root {
         --bg: #dfff00;
         --fg: #000000;
@@ -53,6 +61,7 @@
       body {
         background: var(--bg);
         color: var(--fg);
+        font-family: 'GeoNum', inherit;
         font-size: 22px;
         -webkit-font-smoothing: antialiased;
         -moz-osx-font-smoothing: grayscale;
