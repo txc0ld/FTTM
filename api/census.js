@@ -2,7 +2,7 @@ const CONTRACT = "0x4f249b2dc6cecbd549a0c354bbfc4919e8c5d3ae";
 const EVADER_CONTRACT = "0x075f90ff6b89a1c164fb352bebd0a16f55804ca2";
 const GAME_CONTRACT = "0xa448c7f618087dda1a3b128cad8a424fbae4b71f";
 const SEL_BRIBE_BALANCE = "0xca58643b"; // bribeBalance(uint256)
-const OS_CITIZEN_SLUG = "death-and-taxes-citizens";
+const OS_CITIZEN_SLUG = "deathandtaxes";
 const OS_EVADER_SLUG = "evaders";
 
 // In-memory cache (persists across warm invocations)
