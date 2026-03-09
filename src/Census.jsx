@@ -303,9 +303,9 @@ export default function Census({ mobile }) {
           { label: "CITIZEN FLOOR", value: citizenFloor != null ? `${citizenFloor} ETH` : "?" },
           { label: "EVADER FLOOR", value: evaderFloor != null ? `${evaderFloor} ETH` : "?" },
         ].map((s) => (
-          <div key={s.label} style={{ border: `3px solid ${fg}`, padding: mobile ? 16 : 24, textAlign: "center" }}>
-            <div style={{ fontSize: mobile ? 14 : 16, letterSpacing: 3, marginBottom: 8, opacity: 0.7 }}>{s.label}</div>
-            <div style={{ fontSize: mobile ? 28 : 48, fontWeight: 800, fontFamily: `"${HEADING_FONT}", serif` }}>{s.value}</div>
+          <div key={s.label} style={{ border: `3px solid ${fg}`, padding: mobile ? 10 : 14, textAlign: "center" }}>
+            <div style={{ fontSize: mobile ? 18 : 22, fontWeight: 800, letterSpacing: 3, marginBottom: 8 }}>{s.label}</div>
+            <div style={{ fontSize: mobile ? 20 : 28, fontFamily: `"${HEADING_FONT}", serif`, opacity: 0.8 }}>{s.value}</div>
           </div>
         ))}
       </div>
@@ -344,16 +344,16 @@ export default function Census({ mobile }) {
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
           <div style={{ display: "grid", gridTemplateColumns: mobile ? "1fr" : "1fr 1fr", gap: 16 }}>
-            <div style={{ border: `3px solid ${fg}`, padding: mobile ? 16 : 24, textAlign: "center" }}>
-              <div style={{ fontSize: mobile ? 14 : 16, letterSpacing: 3, marginBottom: 8, opacity: 0.7 }}>INSURED</div>
-              <div style={{ fontSize: mobile ? 36 : 56, fontWeight: 800, fontFamily: `"${HEADING_FONT}", serif` }}>{insuredCount}</div>
+            <div style={{ border: `3px solid ${fg}`, padding: mobile ? 10 : 14, textAlign: "center" }}>
+              <div style={{ fontSize: mobile ? 18 : 22, fontWeight: 800, letterSpacing: 3, marginBottom: 8 }}>INSURED</div>
+              <div style={{ fontSize: mobile ? 20 : 28, fontFamily: `"${HEADING_FONT}", serif`, opacity: 0.8 }}>{insuredCount}</div>
               <div style={{ fontSize: mobile ? 14 : 18, marginTop: 4 }}>
                 {((insuredCount / (insuredCount + uninsuredCount)) * 100).toFixed(1)}%
               </div>
             </div>
-            <div style={{ border: `3px solid ${fg}`, padding: mobile ? 16 : 24, textAlign: "center" }}>
-              <div style={{ fontSize: mobile ? 14 : 16, letterSpacing: 3, marginBottom: 8, opacity: 0.7 }}>UNINSURED</div>
-              <div style={{ fontSize: mobile ? 36 : 56, fontWeight: 800, fontFamily: `"${HEADING_FONT}", serif` }}>{uninsuredCount}</div>
+            <div style={{ border: `3px solid ${fg}`, padding: mobile ? 10 : 14, textAlign: "center" }}>
+              <div style={{ fontSize: mobile ? 18 : 22, fontWeight: 800, letterSpacing: 3, marginBottom: 8 }}>UNINSURED</div>
+              <div style={{ fontSize: mobile ? 20 : 28, fontFamily: `"${HEADING_FONT}", serif`, opacity: 0.8 }}>{uninsuredCount}</div>
               <div style={{ fontSize: mobile ? 14 : 18, marginTop: 4 }}>
                 {((uninsuredCount / (insuredCount + uninsuredCount)) * 100).toFixed(1)}%
               </div>
@@ -390,23 +390,23 @@ export default function Census({ mobile }) {
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
           <div style={{ display: "grid", gridTemplateColumns: mobile ? "1fr" : "1fr 1fr 1fr", gap: 16 }}>
-            <div style={{ border: `3px solid ${fg}`, padding: mobile ? 16 : 24, textAlign: "center" }}>
-              <div style={{ fontSize: mobile ? 14 : 16, letterSpacing: 3, marginBottom: 8, opacity: 0.7 }}>BRIBED</div>
-              <div style={{ fontSize: mobile ? 36 : 56, fontWeight: 800, fontFamily: `"${HEADING_FONT}", serif` }}>{bribedCount}</div>
+            <div style={{ border: `3px solid ${fg}`, padding: mobile ? 10 : 14, textAlign: "center" }}>
+              <div style={{ fontSize: mobile ? 18 : 22, fontWeight: 800, letterSpacing: 3, marginBottom: 8 }}>BRIBED</div>
+              <div style={{ fontSize: mobile ? 20 : 28, fontFamily: `"${HEADING_FONT}", serif`, opacity: 0.8 }}>{bribedCount}</div>
               <div style={{ fontSize: mobile ? 14 : 18, marginTop: 4 }}>
                 {((bribedCount / (bribedCount + unbribedCount)) * 100).toFixed(1)}% OF CITIZENS
               </div>
             </div>
-            <div style={{ border: `3px solid ${fg}`, padding: mobile ? 16 : 24, textAlign: "center" }}>
-              <div style={{ fontSize: mobile ? 14 : 16, letterSpacing: 3, marginBottom: 8, opacity: 0.7 }}>UNBRIBED</div>
-              <div style={{ fontSize: mobile ? 36 : 56, fontWeight: 800, fontFamily: `"${HEADING_FONT}", serif` }}>{unbribedCount}</div>
+            <div style={{ border: `3px solid ${fg}`, padding: mobile ? 10 : 14, textAlign: "center" }}>
+              <div style={{ fontSize: mobile ? 18 : 22, fontWeight: 800, letterSpacing: 3, marginBottom: 8 }}>UNBRIBED</div>
+              <div style={{ fontSize: mobile ? 20 : 28, fontFamily: `"${HEADING_FONT}", serif`, opacity: 0.8 }}>{unbribedCount}</div>
               <div style={{ fontSize: mobile ? 14 : 18, marginTop: 4 }}>
                 {((unbribedCount / (bribedCount + unbribedCount)) * 100).toFixed(1)}% OF CITIZENS
               </div>
             </div>
-            <div style={{ border: `3px solid ${fg}`, padding: mobile ? 16 : 24, textAlign: "center" }}>
-              <div style={{ fontSize: mobile ? 14 : 16, letterSpacing: 3, marginBottom: 8, opacity: 0.7 }}>REMAINING BRIBED</div>
-              <div style={{ fontSize: mobile ? 36 : 56, fontWeight: 800, fontFamily: `"${HEADING_FONT}", serif` }}>
+            <div style={{ border: `3px solid ${fg}`, padding: mobile ? 10 : 14, textAlign: "center" }}>
+              <div style={{ fontSize: mobile ? 18 : 22, fontWeight: 800, letterSpacing: 3, marginBottom: 8 }}>REMAINING BRIBED</div>
+              <div style={{ fontSize: mobile ? 20 : 28, fontFamily: `"${HEADING_FONT}", serif`, opacity: 0.8 }}>
                 {bribedCount - bribedElimCount}
               </div>
               <div style={{ fontSize: mobile ? 14 : 18, marginTop: 4 }}>
