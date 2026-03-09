@@ -28,6 +28,7 @@ export const TEMPLATES = [
   { id: "ripposter", name: "RIP POSTER" },
   { id: "bodybagtag", name: "BODY BAG TAG" },
   { id: "wasted", name: "WASTED" },
+  { id: "grid", name: "GRID" },
   { id: "blank", name: "BLANK" },
 ];
 
@@ -1504,6 +1505,57 @@ export async function buildWastedGif(img, id, m, gifSize = 480, evImg = null) {
    BLANK
    ═══════════════════════════════════════════════ */
 
+/* ═══════════════════════════════════════════════
+   GRID
+   ═══════════════════════════════════════════════ */
+
+function drawGrid(ctx, _img, _id, _meta, _evaderImg, gridImages, gridSize) {
+  const cw = ctx.canvas.width;
+  const ch = ctx.canvas.height;
+  ctx.clearRect(0, 0, cw, ch);
+  const n = gridSize || 3;
+  const gap = Math.max(2, Math.round(4 / (n / 3)));
+  const totalGap = gap * (n + 1);
+  const cellSize = (cw - totalGap) / n;
+
+  // Background
+  ctx.fillStyle = BK;
+  ctx.fillRect(0, 0, cw, ch);
+
+  const imgs = gridImages || [];
+  for (let row = 0; row < n; row++) {
+    for (let col = 0; col < n; col++) {
+      const idx = row * n + col;
+      const x = gap + col * (cellSize + gap);
+      const y = gap + row * (cellSize + gap);
+
+      if (idx < imgs.length && imgs[idx]) {
+        const im = imgs[idx];
+        const scale = Math.max(cellSize / im.width, cellSize / im.height);
+        const sw = im.width * scale;
+        const sh = im.height * scale;
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(x, y, cellSize, cellSize);
+        ctx.clip();
+        ctx.drawImage(im, x + (cellSize - sw) / 2, y + (cellSize - sh) / 2, sw, sh);
+        ctx.restore();
+      } else {
+        // Empty cell
+        ctx.fillStyle = "#111";
+        ctx.fillRect(x, y, cellSize, cellSize);
+        ctx.strokeStyle = "#333";
+        ctx.lineWidth = 1;
+        ctx.strokeRect(x, y, cellSize, cellSize);
+      }
+    }
+  }
+}
+
+/* ═══════════════════════════════════════════════
+   BLANK
+   ═══════════════════════════════════════════════ */
+
 function drawBlank(ctx, img) {
   const cw = ctx.canvas.width;
   const ch = ctx.canvas.height;
@@ -1539,5 +1591,6 @@ export const RENDERERS = {
   ripposter: drawRipPoster,
   bodybagtag: drawBodyBagTag,
   wasted: drawWasted,
+  grid: drawGrid,
   blank: drawBlank,
 };

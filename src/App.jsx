@@ -81,6 +81,10 @@ export default function App() {
   const [transparentBg, setTransparentBg] = useState(true);
   const [bgColor, setBgColor] = useState("#dfff00");
 
+  // Grid template state
+  const [gridSize, setGridSize] = useState(3);
+  const [gridImages, setGridImages] = useState([]);
+
   const [menuOpen, setMenuOpen] = useState(false);
   const navTo = (v) => {
     playClick();
@@ -162,18 +166,41 @@ export default function App() {
     const c = cvs.current;
     if (!c || !ready) return;
     c.width = W;
-    c.height = (tpl === "fvcktax" || tpl === "reaperservice" || tpl === "blank" || tpl === "wasted") ? W : H;
+    c.height = (tpl === "fvcktax" || tpl === "reaperservice" || tpl === "blank" || tpl === "wasted" || tpl === "grid") ? W : H;
     if (tpl === "wasted") {
       RENDERERS.wasted(c.getContext("2d"), img, cid || "????", meta, evaderImg);
+    } else if (tpl === "grid") {
+      RENDERERS.grid(c.getContext("2d"), null, null, null, null, gridImages, gridSize);
     } else {
       RENDERERS[tpl](c.getContext("2d"), img, cid || "????", meta);
     }
-  }, [tpl, img, cid, ready, meta, evaderImg]);
+  }, [tpl, img, cid, ready, meta, evaderImg, gridImages, gridSize]);
 
   useEffect(() => {
     render();
     setGifPreviewUrl(null);
   }, [render]);
+
+  // Load grid images from owned NFTs
+  useEffect(() => {
+    if (tpl !== "grid" || !ownedNFTs.length) { setGridImages([]); return; }
+    let cancelled = false;
+    (async () => {
+      const needed = gridSize * gridSize;
+      const loaded = [];
+      for (let i = 0; i < Math.min(needed, ownedNFTs.length); i++) {
+        if (cancelled) return;
+        const nft = ownedNFTs[i];
+        if (nft.image) {
+          try { loaded.push(await loadImage(nft.image)); } catch { loaded.push(null); }
+        } else {
+          loaded.push(null);
+        }
+      }
+      if (!cancelled) setGridImages(loaded);
+    })();
+    return () => { cancelled = true; };
+  }, [tpl, gridSize, ownedNFTs]);
 
   // Auto-fetch evader image when citizen image loads (for WASTED template transition)
   // Evader names contain citizen ID; check Boneyard cache for image URL
@@ -350,7 +377,7 @@ export default function App() {
       src = tmp;
     }
     const a = document.createElement("a");
-    a.download = `citizen-${cid || "unknown"}-${tpl}.png`;
+    a.download = tpl === "grid" ? `grid-${gridSize}x${gridSize}.png` : `citizen-${cid || "unknown"}-${tpl}.png`;
     a.href = src.toDataURL("image/png");
     a.click();
   };
@@ -361,8 +388,31 @@ export default function App() {
     setBatchExporting(true);
     const offscreen = document.createElement("canvas");
     offscreen.width = W;
-    offscreen.height = (tpl === "fvcktax" || tpl === "reaperservice" || tpl === "blank" || tpl === "wasted") ? W : H;
+    offscreen.height = (tpl === "fvcktax" || tpl === "reaperservice" || tpl === "blank" || tpl === "wasted" || tpl === "grid") ? W : H;
     const octx = offscreen.getContext("2d");
+
+    // Grid template exports as a single image, not per-NFT
+    if (tpl === "grid") {
+      setBatchProgress("EXPORTING GRID...");
+      RENDERERS.grid(octx, null, null, null, null, gridImages, gridSize);
+      let src = offscreen;
+      if (!transparentBg) {
+        const tmp = document.createElement("canvas");
+        tmp.width = offscreen.width; tmp.height = offscreen.height;
+        const tctx = tmp.getContext("2d");
+        tctx.fillStyle = bgColor;
+        tctx.fillRect(0, 0, tmp.width, tmp.height);
+        tctx.drawImage(offscreen, 0, 0);
+        src = tmp;
+      }
+      const a = document.createElement("a");
+      a.download = `grid-${gridSize}x${gridSize}.png`;
+      a.href = src.toDataURL("image/png");
+      a.click();
+      setBatchExporting(false);
+      setBatchProgress("");
+      return;
+    }
 
     for (let i = 0; i < ownedNFTs.length; i++) {
       const nft = ownedNFTs[i];
@@ -371,7 +421,7 @@ export default function App() {
       if (nft.image) {
         try { nftImg = await loadImage(nft.image); } catch {}
       }
-      offscreen.height = (tpl === "fvcktax" || tpl === "reaperservice" || tpl === "blank" || tpl === "wasted") ? W : H;
+      offscreen.height = (tpl === "fvcktax" || tpl === "reaperservice" || tpl === "blank" || tpl === "wasted" || tpl === "grid") ? W : H;
       RENDERERS[tpl](octx, nftImg, nft.id, nft);
       let src = offscreen;
       if (!transparentBg) {
@@ -1332,6 +1382,39 @@ export default function App() {
                 </button>
               ))}
             </div>
+
+            {/* Grid size selector */}
+            {tpl === "grid" && (
+              <div style={{ marginTop: 12 }}>
+                <label style={{ ...S.label, fontSize: 11 }}>GRID SIZE</label>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 3, marginTop: 4 }}>
+                  {[2,3,4,5,6,7,8,9,10].map((n) => (
+                    <button
+                      key={n}
+                      onClick={() => { playClick(); setGridSize(n); }}
+                      style={{
+                        background: gridSize === n ? uiFg : "transparent",
+                        color: gridSize === n ? uiBg : uiFg,
+                        border: `1px solid ${uiFg}`,
+                        padding: "4px 8px",
+                        fontFamily: `"${BODY_FONT}", monospace`,
+                        fontWeight: 500,
+                        fontSize: 12,
+                        cursor: "pointer",
+                        transition: "all 0.15s",
+                      }}
+                    >
+                      {n}x{n}
+                    </button>
+                  ))}
+                </div>
+                {!ownedNFTs.length && (
+                  <div style={{ fontSize: 11, opacity: 0.6, marginTop: 6, fontFamily: `"${BODY_FONT}", monospace` }}>
+                    CONNECT WALLET TO POPULATE GRID
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
 
