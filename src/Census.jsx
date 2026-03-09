@@ -299,6 +299,7 @@ export default function Census({ mobile }) {
           { label: "ELIMINATED", value: elimCount || "?" },
           { label: "SURVIVAL RATE", value: livingCount && elimCount ? `${((livingCount / (livingCount + elimCount)) * 100).toFixed(1)}%` : "?" },
           { label: "TREASURY", value: treasuryBalance != null ? `${treasuryBalance} ETH` : "?" },
+          { label: "TREASURY SPLIT", value: treasuryBalance != null ? `${(treasuryBalance / 69).toFixed(4)} ETH` : "?" },
           { label: "CITIZEN FLOOR", value: citizenFloor != null ? `${citizenFloor} ETH` : "?" },
           { label: "EVADER FLOOR", value: evaderFloor != null ? `${evaderFloor} ETH` : "?" },
         ].map((s) => (
