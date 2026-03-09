@@ -25,7 +25,6 @@ export default function Census({ mobile }) {
   const { colors } = useTheme();
   const { playClick, playStaticBuzz } = useSound();
   const [contractMeta, setContractMeta] = useState(null);
-  const [evaderMeta, setEvaderMeta] = useState(null);
   const [classes, setClasses] = useState(null);
   const [classEliminated, setClassEliminated] = useState({});
   const [insuredCount, setInsuredCount] = useState(0);
@@ -67,12 +66,8 @@ export default function Census({ mobile }) {
 
   const fetchContractMetaData = async () => {
     try {
-      const [main, evader] = await Promise.all([
-        apiFetchContractMeta(CONTRACT),
-        apiFetchContractMeta(EVADER_CONTRACT),
-      ]);
-      setContractMeta(main);
-      setEvaderMeta(evader);
+      const data = await apiFetchContractMeta(CONTRACT);
+      setContractMeta(data);
     } catch {}
   };
 
@@ -236,11 +231,9 @@ export default function Census({ mobile }) {
     });
   };
 
-  const elimFromCensus = Object.values(classEliminated).reduce((s, v) => s + v, 0);
-  const evaderSupply = evaderMeta?.totalSupply || evaderMeta?.openSeaMetadata?.totalSupply || null;
-  const elimTotal = elimFromCensus || (evaderSupply ? parseInt(evaderSupply) : 0);
-  const livingSupply = contractMeta?.totalSupply || contractMeta?.openSeaMetadata?.totalSupply || "?";
-  const totalSupply = livingSupply !== "?" && elimTotal ? parseInt(livingSupply) + elimTotal : livingSupply;
+  const livingCount = classes ? Object.values(classes).reduce((s, v) => s + v, 0) : null;
+  const elimCount = Object.values(classEliminated).reduce((s, v) => s + v, 0) || null;
+  const totalSupply = livingCount && elimCount ? livingCount + elimCount : "?";
   const floorPrice = contractMeta?.openSeaMetadata?.floorPrice || "?";
 
   const hasInsurance = insuredCount > 0 || uninsuredCount > 0;
@@ -303,10 +296,10 @@ export default function Census({ mobile }) {
       <div style={{ display: "grid", gridTemplateColumns: mobile ? "1fr" : "1fr 1fr", gap: 16 }}>
         {[
           { label: "TOTAL SUPPLY", value: totalSupply },
-          { label: "LIVING", value: livingSupply },
-          { label: "ELIMINATED", value: elimTotal || "?" },
+          { label: "LIVING", value: livingCount || "?" },
+          { label: "ELIMINATED", value: elimCount || "?" },
           { label: "FLOOR PRICE", value: floorPrice !== "?" ? `${floorPrice} ETH` : "?" },
-          { label: "SURVIVAL RATE", value: totalSupply !== "?" && elimTotal ? `${(((parseInt(totalSupply) - elimTotal) / parseInt(totalSupply)) * 100).toFixed(1)}%` : "?" },
+          { label: "SURVIVAL RATE", value: livingCount && elimCount ? `${((livingCount / (livingCount + elimCount)) * 100).toFixed(1)}%` : "?" },
         ].map((s) => (
           <div key={s.label} style={{ border: `3px solid ${fg}`, padding: mobile ? 16 : 24, textAlign: "center" }}>
             <div style={{ fontSize: mobile ? 14 : 16, letterSpacing: 3, marginBottom: 8, opacity: 0.7 }}>{s.label}</div>
@@ -331,7 +324,7 @@ export default function Census({ mobile }) {
               {Object.values(classes).reduce((s, v) => s + v, 0)} TOTAL CITIZENS
             </span>
             <span style={{ background: colors.error, color: "#fff", padding: "4px 10px" }}>
-              {elimTotal} ELIMINATED (RED OVERLAY)
+              {elimCount} ELIMINATED (RED OVERLAY)
             </span>
           </div>
           <div style={{ border: `2px solid ${fg}`, overflow: "hidden" }}>
@@ -364,7 +357,7 @@ export default function Census({ mobile }) {
               </div>
             </div>
           </div>
-          {elimTotal > 0 && (
+          {elimCount > 0 && (
             <div style={{
               border: `3px solid ${colors.error}`,
               padding: mobile ? 16 : 24,
@@ -375,7 +368,7 @@ export default function Census({ mobile }) {
                 IT DIDN'T SAVE THEM
               </div>
               <div style={{ fontSize: mobile ? 14 : 18, marginTop: 8, opacity: 0.8 }}>
-                {elimTotal} CITIZENS ELIMINATED REGARDLESS OF INSURANCE STATUS
+                {elimCount} CITIZENS ELIMINATED REGARDLESS OF INSURANCE STATUS
               </div>
             </div>
           )}
