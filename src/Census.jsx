@@ -26,6 +26,7 @@ export default function Census({ mobile }) {
   const { playClick, playStaticBuzz } = useSound();
   const [citizenFloor, setCitizenFloor] = useState(null);
   const [evaderFloor, setEvaderFloor] = useState(null);
+  const [treasuryBalance, setTreasuryBalance] = useState(null);
   const [classes, setClasses] = useState(null);
   const [classEliminated, setClassEliminated] = useState({});
   const [insuredCount, setInsuredCount] = useState(0);
@@ -57,6 +58,7 @@ export default function Census({ mobile }) {
       if (cached.bribeHolders) setBribeHolders(cached.bribeHolders);
       if (cached.citizenFloor != null) setCitizenFloor(cached.citizenFloor);
       if (cached.evaderFloor != null) setEvaderFloor(cached.evaderFloor);
+      if (cached.treasuryBalance != null) setTreasuryBalance(cached.treasuryBalance);
     }
   }, []);
 
@@ -77,6 +79,7 @@ export default function Census({ mobile }) {
     setBribeHolders(r.bribeHolders || []);
     if (r.citizenFloor != null) setCitizenFloor(r.citizenFloor);
     if (r.evaderFloor != null) setEvaderFloor(r.evaderFloor);
+    if (r.treasuryBalance != null) setTreasuryBalance(r.treasuryBalance);
     saveCensusCache(r);
   };
 
@@ -295,6 +298,7 @@ export default function Census({ mobile }) {
           { label: "LIVING", value: livingCount || "?" },
           { label: "ELIMINATED", value: elimCount || "?" },
           { label: "SURVIVAL RATE", value: livingCount && elimCount ? `${((livingCount / (livingCount + elimCount)) * 100).toFixed(1)}%` : "?" },
+          { label: "TREASURY", value: treasuryBalance != null ? `${treasuryBalance} ETH` : "?" },
           { label: "CITIZEN FLOOR", value: citizenFloor != null ? `${citizenFloor} ETH` : "?" },
           { label: "EVADER FLOOR", value: evaderFloor != null ? `${evaderFloor} ETH` : "?" },
         ].map((s) => (

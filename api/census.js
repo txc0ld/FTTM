@@ -2,6 +2,7 @@ const CONTRACT = "0x4f249b2dc6cecbd549a0c354bbfc4919e8c5d3ae";
 const EVADER_CONTRACT = "0x075f90ff6b89a1c164fb352bebd0a16f55804ca2";
 const GAME_CONTRACT = "0xa448c7f618087dda1a3b128cad8a424fbae4b71f";
 const SEL_BRIBE_BALANCE = "0xca58643b"; // bribeBalance(uint256)
+const SEL_TREASURY = "0x61d027b3"; // treasury()
 const OS_CITIZEN_SLUG = "deathandtaxes";
 const OS_EVADER_SLUG = "evaders";
 
@@ -107,6 +108,36 @@ async function fetchListedTokenIds(slug, osKey) {
     } while (next);
   } catch {}
   return listed;
+}
+
+async function fetchTreasuryBalance(key) {
+  const rpc = `https://eth-mainnet.g.alchemy.com/v2/${key}`;
+  try {
+    // Get treasury address from game contract
+    const addrRes = await fetch(rpc, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ jsonrpc: "2.0", method: "eth_call", params: [{ to: GAME_CONTRACT, data: SEL_TREASURY }, "latest"], id: 1 }),
+    });
+    const addrData = await addrRes.json();
+    if (!addrData.result || addrData.result === "0x") return null;
+    const treasuryAddr = "0x" + addrData.result.slice(26);
+
+    // Get ETH balance of treasury wallet
+    const balRes = await fetch(rpc, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ jsonrpc: "2.0", method: "eth_getBalance", params: [treasuryAddr, "latest"], id: 2 }),
+    });
+    const balData = await balRes.json();
+    if (!balData.result) return null;
+
+    const wei = BigInt(balData.result);
+    // Return as number with 4 decimal precision
+    return Math.round(Number(wei) / 1e14) / 1e4;
+  } catch {
+    return null;
+  }
 }
 
 async function fetchOpenSeaStats(slug, osKey) {
@@ -236,7 +267,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const [mainNfts, evaderNfts, bribeBalances, citizenStats, evaderStats, citizenListings, evaderListings] = await Promise.all([
+    const [mainNfts, evaderNfts, bribeBalances, citizenStats, evaderStats, citizenListings, evaderListings, treasuryBalance] = await Promise.all([
       scrapeContract(key, CONTRACT),
       scrapeContract(key, EVADER_CONTRACT),
       fetchBribeBalances(key, 5000),
@@ -244,6 +275,7 @@ export default async function handler(req, res) {
       fetchOpenSeaStats(OS_EVADER_SLUG, osKey),
       fetchListedTokenIds(OS_CITIZEN_SLUG, osKey),
       fetchListedTokenIds(OS_EVADER_SLUG, osKey),
+      fetchTreasuryBalance(key),
     ]);
 
     const result = aggregate(mainNfts, evaderNfts, bribeBalances);
@@ -251,6 +283,7 @@ export default async function handler(req, res) {
     result.evaderFloor = evaderStats?.total?.floor_price ?? null;
     result.citizenOwners = citizenStats?.total?.num_owners ?? null;
     result.evaderOwners = evaderStats?.total?.num_owners ?? null;
+    result.treasuryBalance = treasuryBalance;
 
     // Tag bribe holders with listing status
     result.bribeHolders.forEach((h) => {
