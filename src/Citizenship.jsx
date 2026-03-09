@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useTheme } from "./shared/theme";
 import { CONTRACT, fetchWalletNFTs } from "./shared/api";
-const HEADING_FONT = "VT323";
+const HEADING_FONT = "Bajern";
 const BODY_FONT = "DeptBody";
 
 /* ═══════════════════════════════════════════════

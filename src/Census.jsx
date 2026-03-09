@@ -3,7 +3,7 @@ import { useTheme } from "./shared/theme";
 import { useSound } from "./shared/sound";
 import { CONTRACT, EVADER_CONTRACT, fetchNFTsForContract } from "./shared/api";
 
-const HEADING_FONT = "VT323";
+const HEADING_FONT = "Bajern";
 const BODY_FONT = "DeptBody";
 
 const CENSUS_LS = "dt_census_cache";

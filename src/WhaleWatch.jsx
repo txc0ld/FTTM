@@ -3,7 +3,7 @@ import { useTheme } from "./shared/theme";
 import { useSound } from "./shared/sound";
 import { CONTRACT, fetchOwnersForContract } from "./shared/api";
 
-const HEADING_FONT = "VT323";
+const HEADING_FONT = "Bajern";
 const BODY_FONT = "DeptBody";
 const LS_KEY = "dt_owners_cache";
 const FOUR_HOURS = 4 * 60 * 60 * 1000;

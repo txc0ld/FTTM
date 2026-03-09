@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useTheme } from "./shared/theme";
 
 const BODY_FONT = "DeptBody";
-const HEADING_FONT = "VT323";
+const HEADING_FONT = "Bajern";
 
 const STATUS_COLORS = {
   DELINQUENT: "#ff0000",
