@@ -69,10 +69,35 @@ export default function Census({ mobile }) {
     } catch {}
   };
 
+  const applyCensusResult = (r) => {
+    setClasses(r.classes);
+    setClassEliminated(r.classEliminated);
+    setInsuredCount(r.insuredCount);
+    setUninsuredCount(r.uninsuredCount);
+    setBribedCount(r.bribedCount);
+    setUnbribedCount(r.unbribedCount);
+    setBribedElimCount(r.bribedElimCount);
+    saveCensusCache(r);
+  };
+
   const scrapeClasses = async () => {
     setLoading(true);
     setError("");
-    setProgress("INITIATING CLASS CENSUS...");
+    setProgress("REQUESTING CENSUS DATA...");
+    try {
+      // Try fast server-side census first
+      const res = await fetch("/api/census");
+      if (res.ok) {
+        const data = await res.json();
+        applyCensusResult(data);
+        setProgress("");
+        setLoading(false);
+        return;
+      }
+    } catch {}
+
+    // Fallback: client-side scrape
+    setProgress("SERVER UNAVAILABLE — SCRAPING CLIENT-SIDE...");
     try {
       const classCounts = {};
       const classInsured = { yes: 0, no: 0 };
@@ -81,7 +106,6 @@ export default function Census({ mobile }) {
       let pages = 0;
       let total = 0;
 
-      // Scrape main contract for class data
       do {
         const data = await fetchNFTsForContract(CONTRACT, {
           withMetadata: true,
@@ -111,7 +135,6 @@ export default function Census({ mobile }) {
         if (pageKey) await new Promise((r) => setTimeout(r, 200));
       } while (pageKey);
 
-      // Now scrape evader contract to get elimination counts per class
       const elimByClass = {};
       let bribedElim = 0;
       let evaderKey = null;
@@ -145,14 +168,12 @@ export default function Census({ mobile }) {
         if (evaderKey) await new Promise((r) => setTimeout(r, 200));
       } while (evaderKey);
 
-      setClasses(classCounts);
-      setClassEliminated(elimByClass);
-      setInsuredCount(classInsured.yes);
-      setUninsuredCount(classInsured.no);
-      setBribedCount(classBribes.yes);
-      setUnbribedCount(classBribes.no);
-      setBribedElimCount(bribedElim);
-      saveCensusCache({ classes: classCounts, classEliminated: elimByClass, insuredCount: classInsured.yes, uninsuredCount: classInsured.no, bribedCount: classBribes.yes, unbribedCount: classBribes.no, bribedElimCount: bribedElim });
+      applyCensusResult({
+        classes: classCounts, classEliminated: elimByClass,
+        insuredCount: classInsured.yes, uninsuredCount: classInsured.no,
+        bribedCount: classBribes.yes, unbribedCount: classBribes.no,
+        bribedElimCount: bribedElim,
+      });
       setProgress("");
     } catch (e) {
       setError(e.message || "CENSUS FAILED");
@@ -407,13 +428,13 @@ export default function Census({ mobile }) {
       {/* BRIBES TAB */}
       {tab === "BRIBES" && (
         <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-          {bribedCount === 0 && unbribedCount === 0 ? (
+          {!classes ? (
             <div style={{ textAlign: "center", padding: 40 }}>
               <div style={{ fontSize: mobile ? 16 : 22, marginBottom: 16 }}>
                 RUN THE CLASS CENSUS FIRST TO GATHER BRIBE DATA.
               </div>
               <button
-                onClick={() => { setTab("CLASS"); if (!classes) scrapeClasses(); playClick(); }}
+                onClick={() => { scrapeClasses(); playClick(); }}
                 style={{
                   background: fg,
                   color: bg,
@@ -425,11 +446,67 @@ export default function Census({ mobile }) {
                   fontFamily: `"${HEADING_FONT}", serif`,
                 }}
               >
-                GO TO CLASS CENSUS
+                RUN CENSUS
               </button>
+              {progress && (
+                <div style={{ marginTop: 16, background: fg, color: bg, padding: "8px 16px", fontWeight: 700, fontSize: mobile ? 14 : 18 }}>
+                  {progress}
+                </div>
+              )}
+              {error && <div style={{ marginTop: 8, color: colors.error, fontWeight: 700 }}>{error}</div>}
+            </div>
+          ) : bribedCount === 0 && unbribedCount === 0 ? (
+            <div style={{ textAlign: "center", padding: 40 }}>
+              <div style={{ fontSize: mobile ? 16 : 22, marginBottom: 16 }}>
+                CACHED DATA PREDATES BRIBE TRACKING. RESCAN TO POPULATE.
+              </div>
+              <button
+                onClick={() => { scrapeClasses(); playStaticBuzz(); }}
+                disabled={loading}
+                style={{
+                  background: fg,
+                  color: bg,
+                  border: `3px solid ${fg}`,
+                  padding: "12px 24px",
+                  fontSize: mobile ? 16 : 20,
+                  fontWeight: 800,
+                  cursor: loading ? "wait" : "pointer",
+                  fontFamily: `"${HEADING_FONT}", serif`,
+                }}
+              >
+                {loading ? "SCRAPING..." : "RESCAN CENSUS"}
+              </button>
+              {progress && (
+                <div style={{ marginTop: 16, background: fg, color: bg, padding: "8px 16px", fontWeight: 700, fontSize: mobile ? 14 : 18 }}>
+                  {progress}
+                </div>
+              )}
             </div>
           ) : (
             <>
+              <div style={{ display: "flex", gap: 8, marginBottom: 4 }}>
+                <button
+                  onClick={() => { scrapeClasses(); playStaticBuzz(); }}
+                  disabled={loading}
+                  style={{
+                    background: "transparent",
+                    color: fg,
+                    border: `2px solid ${fg}`,
+                    padding: "4px 12px",
+                    fontSize: mobile ? 14 : 16,
+                    fontWeight: 700,
+                    cursor: "pointer",
+                    fontFamily: "inherit",
+                  }}
+                >
+                  {loading ? "SCRAPING..." : "RESCAN"}
+                </button>
+                {loading && progress && (
+                  <span style={{ padding: "4px 10px", background: fg, color: bg, fontWeight: 700, fontSize: mobile ? 14 : 16 }}>
+                    {progress}
+                  </span>
+                )}
+              </div>
               <div style={{ display: "grid", gridTemplateColumns: mobile ? "1fr" : "1fr 1fr 1fr", gap: 16 }}>
                 <div style={{ border: `3px solid ${fg}`, padding: mobile ? 16 : 24, textAlign: "center" }}>
                   <div style={{ fontSize: mobile ? 14 : 16, letterSpacing: 3, marginBottom: 8, opacity: 0.7 }}>BRIBED</div>
@@ -470,7 +547,7 @@ export default function Census({ mobile }) {
                     {bribedElimCount} BRIBED CITIZENS ELIMINATED ANYWAY
                   </div>
                   <div style={{ fontSize: mobile ? 12 : 16, marginTop: 4, opacity: 0.6 }}>
-                    {bribedCount > 0 ? ((bribedElimCount / bribedCount) * 100).toFixed(1) : "0.0"}% BRIBE FAILURE RATE
+                    {((bribedElimCount / bribedCount) * 100).toFixed(1)}% BRIBE FAILURE RATE
                   </div>
                 </div>
               )}
