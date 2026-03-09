@@ -166,7 +166,7 @@ export default function App() {
     const c = cvs.current;
     if (!c || !ready) return;
     c.width = W;
-    c.height = tpl === "grid" ? W + 108 : (tpl === "fvcktax" || tpl === "reaperservice" || tpl === "blank" || tpl === "wasted") ? W : H;
+    c.height = tpl === "grid" ? W + 148 : (tpl === "fvcktax" || tpl === "reaperservice" || tpl === "blank" || tpl === "wasted") ? W : H;
     if (tpl === "wasted") {
       RENDERERS.wasted(c.getContext("2d"), img, cid || "????", meta, evaderImg);
     } else if (tpl === "grid") {
@@ -392,7 +392,7 @@ export default function App() {
     setBatchExporting(true);
     const offscreen = document.createElement("canvas");
     offscreen.width = W;
-    offscreen.height = tpl === "grid" ? W + 108 : (tpl === "fvcktax" || tpl === "reaperservice" || tpl === "blank" || tpl === "wasted") ? W : H;
+    offscreen.height = tpl === "grid" ? W + 148 : (tpl === "fvcktax" || tpl === "reaperservice" || tpl === "blank" || tpl === "wasted") ? W : H;
     const octx = offscreen.getContext("2d");
 
     // Grid template exports as a single image, not per-NFT
@@ -425,7 +425,7 @@ export default function App() {
       if (nft.image) {
         try { nftImg = await loadImage(nft.image); } catch {}
       }
-      offscreen.height = tpl === "grid" ? W + 108 : (tpl === "fvcktax" || tpl === "reaperservice" || tpl === "blank" || tpl === "wasted") ? W : H;
+      offscreen.height = tpl === "grid" ? W + 148 : (tpl === "fvcktax" || tpl === "reaperservice" || tpl === "blank" || tpl === "wasted") ? W : H;
       RENDERERS[tpl](octx, nftImg, nft.id, nft);
       let src = offscreen;
       if (!transparentBg) {

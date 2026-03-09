@@ -1520,19 +1520,19 @@ function drawGrid(ctx, _img, _id, _meta, _evaderImg, gridImages, gridSize) {
   ctx.fillRect(0, 0, cw, ch);
 
   // Header area
-  const headerH = 100;
+  const headerH = 140;
   const pad = 24;
 
-  // Title — "DEATH & TAXES" centered
+  // Title centered horizontally and vertically in header
   ctx.fillStyle = BK;
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
-  ctx.font = `bold 68px "${HEADING_FONT}", serif`;
+  ctx.font = `bold 90px "${HEADING_FONT}", serif`;
   ctx.fillText("DEATH AND TAXES", cw / 2, headerH / 2);
 
   // Reaper icon — top right
   if (reaperImg) {
-    const iconH = 70;
+    const iconH = 90;
     const aspect = reaperImg.width / reaperImg.height;
     const iconW = iconH * aspect;
     ctx.drawImage(reaperImg, cw - iconW - pad, (headerH - iconH) / 2, iconW, iconH);
