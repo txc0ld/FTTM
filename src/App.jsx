@@ -181,34 +181,16 @@ export default function App() {
     setGifPreviewUrl(null);
   }, [render]);
 
-  // Load grid images from owned NFTs (citizens + evaders)
-  const [gridNFTs, setGridNFTs] = useState([]);
+  // Load grid images from owned NFTs (citizens + evaders already combined)
   useEffect(() => {
-    if (tpl !== "grid" || !wallet) { setGridNFTs([]); setGridImages([]); return; }
-    let cancelled = false;
-    (async () => {
-      try {
-        const [evaders] = await Promise.all([
-          fetchWalletEvaders(wallet),
-        ]);
-        const combined = [...ownedNFTs, ...evaders];
-        if (!cancelled) setGridNFTs(combined);
-      } catch {
-        if (!cancelled) setGridNFTs([...ownedNFTs]);
-      }
-    })();
-    return () => { cancelled = true; };
-  }, [tpl, wallet, ownedNFTs]);
-
-  useEffect(() => {
-    if (tpl !== "grid" || !gridNFTs.length) { setGridImages([]); return; }
+    if (tpl !== "grid" || !ownedNFTs.length) { setGridImages([]); return; }
     let cancelled = false;
     (async () => {
       const needed = gridSize * gridSize;
       const loaded = [];
-      for (let i = 0; i < Math.min(needed, gridNFTs.length); i++) {
+      for (let i = 0; i < Math.min(needed, ownedNFTs.length); i++) {
         if (cancelled) return;
-        const nft = gridNFTs[i];
+        const nft = ownedNFTs[i];
         if (nft.image) {
           try { loaded.push(await loadImage(nft.image)); } catch { loaded.push(null); }
         } else {
@@ -218,7 +200,7 @@ export default function App() {
       if (!cancelled) setGridImages(loaded);
     })();
     return () => { cancelled = true; };
-  }, [tpl, gridSize, gridNFTs]);
+  }, [tpl, gridSize, ownedNFTs]);
 
   // Auto-fetch evader image when citizen image loads (for WASTED template transition)
   // Evader names contain citizen ID; check Boneyard cache for image URL
@@ -267,11 +249,15 @@ export default function App() {
     setError("");
     setOwnedNFTs([]);
     try {
-      const nfts = await fetchWalletNFTs(w);
-      if (nfts.length === 0) {
+      const [citizens, evaders] = await Promise.all([
+        fetchWalletNFTs(w),
+        fetchWalletEvaders(w),
+      ]);
+      const combined = [...citizens, ...evaders];
+      if (combined.length === 0) {
         setError("No Death & Taxes NFTs found in this wallet");
       }
-      setOwnedNFTs(nfts);
+      setOwnedNFTs(combined);
     } catch (e) {
       setError(e.message || "Failed to fetch NFTs");
     }
@@ -1430,9 +1416,9 @@ export default function App() {
                   <div style={{ fontSize: 11, opacity: 0.6, marginTop: 6, fontFamily: `"${BODY_FONT}", monospace` }}>
                     CONNECT WALLET TO POPULATE GRID
                   </div>
-                ) : gridNFTs.length > 0 && (
+                ) : ownedNFTs.length > 0 && (
                   <div style={{ fontSize: 11, opacity: 0.6, marginTop: 6, fontFamily: `"${BODY_FONT}", monospace` }}>
-                    {gridNFTs.length} NFT{gridNFTs.length !== 1 ? "S" : ""} AVAILABLE (CITIZENS + EVADERS)
+                    {ownedNFTs.length} NFT{ownedNFTs.length !== 1 ? "S" : ""} AVAILABLE (CITIZENS + EVADERS)
                   </div>
                 )}
               </div>
