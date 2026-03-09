@@ -294,9 +294,9 @@ export default function Census({ mobile }) {
           { label: "TOTAL SUPPLY", value: totalSupply || "?" },
           { label: "LIVING", value: livingCount || "?" },
           { label: "ELIMINATED", value: elimCount || "?" },
+          { label: "SURVIVAL RATE", value: livingCount && elimCount ? `${((livingCount / (livingCount + elimCount)) * 100).toFixed(1)}%` : "?" },
           { label: "CITIZEN FLOOR", value: citizenFloor != null ? `${citizenFloor} ETH` : "?" },
           { label: "EVADER FLOOR", value: evaderFloor != null ? `${evaderFloor} ETH` : "?" },
-          { label: "SURVIVAL RATE", value: livingCount && elimCount ? `${((livingCount / (livingCount + elimCount)) * 100).toFixed(1)}%` : "?" },
         ].map((s) => (
           <div key={s.label} style={{ border: `3px solid ${fg}`, padding: mobile ? 16 : 24, textAlign: "center" }}>
             <div style={{ fontSize: mobile ? 14 : 16, letterSpacing: 3, marginBottom: 8, opacity: 0.7 }}>{s.label}</div>
