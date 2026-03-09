@@ -232,7 +232,8 @@ export default function Census({ mobile }) {
   };
 
   const elimTotal = Object.values(classEliminated).reduce((s, v) => s + v, 0);
-  const totalSupply = contractMeta?.totalSupply || contractMeta?.openSeaMetadata?.totalSupply || "?";
+  const livingSupply = contractMeta?.totalSupply || contractMeta?.openSeaMetadata?.totalSupply || "?";
+  const totalSupply = livingSupply !== "?" && elimTotal ? parseInt(livingSupply) + elimTotal : livingSupply;
   const floorPrice = contractMeta?.openSeaMetadata?.floorPrice || "?";
 
   const hasInsurance = insuredCount > 0 || uninsuredCount > 0;
@@ -295,8 +296,9 @@ export default function Census({ mobile }) {
       <div style={{ display: "grid", gridTemplateColumns: mobile ? "1fr" : "1fr 1fr", gap: 16 }}>
         {[
           { label: "TOTAL SUPPLY", value: totalSupply },
-          { label: "FLOOR PRICE", value: floorPrice !== "?" ? `${floorPrice} ETH` : "?" },
+          { label: "LIVING", value: livingSupply },
           { label: "ELIMINATED", value: elimTotal || "?" },
+          { label: "FLOOR PRICE", value: floorPrice !== "?" ? `${floorPrice} ETH` : "?" },
           { label: "SURVIVAL RATE", value: totalSupply !== "?" && elimTotal ? `${(((parseInt(totalSupply) - elimTotal) / parseInt(totalSupply)) * 100).toFixed(1)}%` : "?" },
         ].map((s) => (
           <div key={s.label} style={{ border: `3px solid ${fg}`, padding: mobile ? 16 : 24, textAlign: "center" }}>
