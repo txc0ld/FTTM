@@ -25,6 +25,7 @@ export default function Census({ mobile }) {
   const { colors } = useTheme();
   const { playClick, playStaticBuzz } = useSound();
   const [contractMeta, setContractMeta] = useState(null);
+  const [evaderMeta, setEvaderMeta] = useState(null);
   const [classes, setClasses] = useState(null);
   const [classEliminated, setClassEliminated] = useState({});
   const [insuredCount, setInsuredCount] = useState(0);
@@ -66,8 +67,12 @@ export default function Census({ mobile }) {
 
   const fetchContractMetaData = async () => {
     try {
-      const data = await apiFetchContractMeta(CONTRACT);
-      setContractMeta(data);
+      const [main, evader] = await Promise.all([
+        apiFetchContractMeta(CONTRACT),
+        apiFetchContractMeta(EVADER_CONTRACT),
+      ]);
+      setContractMeta(main);
+      setEvaderMeta(evader);
     } catch {}
   };
 
@@ -234,7 +239,8 @@ export default function Census({ mobile }) {
   const totalSupply = classes ? Object.values(classes).reduce((s, v) => s + v, 0) : null;
   const elimCount = Object.values(classEliminated).reduce((s, v) => s + v, 0) || null;
   const livingCount = totalSupply && elimCount ? totalSupply - elimCount : null;
-  const floorPrice = contractMeta?.openSeaMetadata?.floorPrice || "?";
+  const citizenFloor = contractMeta?.openSeaMetadata?.floorPrice || "?";
+  const evaderFloor = evaderMeta?.openSeaMetadata?.floorPrice || "?";
 
   const hasInsurance = insuredCount > 0 || uninsuredCount > 0;
   const hasBribes = bribedCount > 0 || unbribedCount > 0;
@@ -295,10 +301,11 @@ export default function Census({ mobile }) {
       {sectionHeader("POPULATION")}
       <div style={{ display: "grid", gridTemplateColumns: mobile ? "1fr" : "1fr 1fr", gap: 16 }}>
         {[
-          { label: "TOTAL SUPPLY", value: totalSupply },
+          { label: "TOTAL SUPPLY", value: totalSupply || "?" },
           { label: "LIVING", value: livingCount || "?" },
           { label: "ELIMINATED", value: elimCount || "?" },
-          { label: "FLOOR PRICE", value: floorPrice !== "?" ? `${floorPrice} ETH` : "?" },
+          { label: "CITIZEN FLOOR", value: citizenFloor !== "?" ? `${citizenFloor} ETH` : "?" },
+          { label: "EVADER FLOOR", value: evaderFloor !== "?" ? `${evaderFloor} ETH` : "?" },
           { label: "SURVIVAL RATE", value: livingCount && elimCount ? `${((livingCount / (livingCount + elimCount)) * 100).toFixed(1)}%` : "?" },
         ].map((s) => (
           <div key={s.label} style={{ border: `3px solid ${fg}`, padding: mobile ? 16 : 24, textAlign: "center" }}>
