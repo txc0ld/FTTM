@@ -893,7 +893,7 @@ export default function DailyRiot({ mobile, ownedNFTs, wallet, setWallet, handle
                 <div key={f.cls} className="riot-fadeup" style={{ animationDelay: `${i * 0.05}s`, border: `2px solid ${BK}`, padding: mobile ? 12 : 16 }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                      <span style={{ fontSize: mobile ? 20 : 28, fontFamily: `"${HEADING_FONT}", monospace`, color: i === 0 ? "#E6C200" : BK }}>#{i + 1}</span>
+                      <span style={{ fontSize: mobile ? 20 : 28, fontFamily: `"${BODY_FONT}", monospace`, color: i === 0 ? "#E6C200" : BK }}>#{i + 1}</span>
                       <span style={{ fontSize: mobile ? 16 : 22, fontWeight: 800 }}>{f.cls}</span>
                       <span style={{ fontSize: 13, opacity: 0.6 }}>{f.count} FIGHTERS</span>
                     </div>
@@ -1023,7 +1023,7 @@ export default function DailyRiot({ mobile, ownedNFTs, wallet, setWallet, handle
                     transition: "background 0.2s",
                   }}
                 >
-                  <span style={{ fontSize: mobile ? 18 : 28, fontFamily: `"${HEADING_FONT}", monospace`, color: rankColor, fontWeight: 800 }}>
+                  <span style={{ fontSize: mobile ? 18 : 28, fontFamily: `"${BODY_FONT}", monospace`, color: rankColor, fontWeight: 800 }}>
                     {i + 1}
                   </span>
                   <span style={{ display: "flex", alignItems: "center", gap: 8, overflow: "hidden" }}>
@@ -1062,7 +1062,7 @@ export default function DailyRiot({ mobile, ownedNFTs, wallet, setWallet, handle
                           { label: "DIFF", value: diff > 0 ? `+${diff}` : String(diff) },
                         ].map(s => (
                           <div key={s.label} style={{ border: `2px solid ${BK}`, padding: "8px 12px", textAlign: "center" }}>
-                            <div style={{ fontSize: 24, fontWeight: 800, fontFamily: `"${HEADING_FONT}", monospace` }}>{s.value}</div>
+                            <div style={{ fontSize: 24, fontWeight: 800, fontFamily: `"${BODY_FONT}", monospace` }}>{s.value}</div>
                             <div style={{ fontSize: 11, letterSpacing: 2, opacity: 0.7, marginTop: 2 }}>{s.label}</div>
                           </div>
                         ))}
@@ -1173,7 +1173,7 @@ export default function DailyRiot({ mobile, ownedNFTs, wallet, setWallet, handle
               { label: "INSURED", value: `${insuredCount}/${ownedNFTs.length}` },
             ].map(s => (
               <div key={s.label} style={{ border: `3px solid ${BK}`, padding: mobile ? 12 : 16, textAlign: "center" }}>
-                <div style={{ fontSize: mobile ? 24 : 36, fontWeight: 800, fontFamily: `"${HEADING_FONT}", monospace` }}>{s.value}</div>
+                <div style={{ fontSize: mobile ? 24 : 36, fontWeight: 800, fontFamily: `"${BODY_FONT}", monospace` }}>{s.value}</div>
                 <div style={{ fontSize: 11, letterSpacing: 2, opacity: 0.7, marginTop: 4 }}>{s.label}</div>
               </div>
             ))}
@@ -1202,7 +1202,7 @@ export default function DailyRiot({ mobile, ownedNFTs, wallet, setWallet, handle
             return (
               <div key={nft.id} className="riot-fadeup" style={{ animationDelay: `${idx * 0.05}s`, border: `4px solid ${BK}`, padding: 14, boxShadow: `6px 6px 0px ${BK}` }}>
                 <FighterImg src={nft.image || ""} alt={`#${nft.id}`} style={{ width: "100%", aspectRatio: "1", imageRendering: "pixelated", border: `2px solid ${BK}` }} />
-                <div style={{ marginTop: 12, fontSize: 28, fontFamily: `"${HEADING_FONT}", monospace` }}>#{nft.id}</div>
+                <div style={{ marginTop: 12, fontSize: 28, fontFamily: `"${BODY_FONT}", monospace` }}>#{nft.id}</div>
                 <div style={{ fontSize: 13, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1, opacity: 0.7 }}>CLASS: {nft.class}</div>
 
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 8, borderTop: `2px solid ${BK}`, paddingTop: 10 }}>
