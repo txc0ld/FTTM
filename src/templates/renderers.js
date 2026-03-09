@@ -1573,15 +1573,28 @@ function drawGrid(ctx, _img, _id, _meta, _evaderImg, gridImages, gridSize) {
     }
   }
 
-  // Reaper icon — bottom center, below the grid
+  // Footer area — below grid
+  const gridBottom = gridTop + outerPad + n * cellSize + (n - 1) * gap;
+  const footerMid = gridBottom + (ch - gridBottom) / 2;
+
+  // Reaper icon — bottom center
   if (reaperImg) {
-    const gridBottom = gridTop + outerPad + n * cellSize + (n - 1) * gap;
-    const spaceBelow = ch - gridBottom;
-    const iconH = Math.min(70, spaceBelow - 8);
+    const iconH = Math.min(70, ch - gridBottom - 8);
     const aspect = reaperImg.width / reaperImg.height;
     const iconW = iconH * aspect;
-    ctx.drawImage(reaperImg, (cw - iconW) / 2, gridBottom + (spaceBelow - iconH) / 2, iconW, iconH);
+    ctx.drawImage(reaperImg, (cw - iconW) / 2, gridBottom + (ch - gridBottom - iconH) / 2, iconW, iconH);
   }
+
+  // "DEPT OF DEATH" — bottom left
+  ctx.fillStyle = BK;
+  ctx.font = `bold 18px "${HEADING_FONT}", serif`;
+  ctx.textAlign = "left";
+  ctx.textBaseline = "middle";
+  ctx.fillText("DEPT OF DEATH", outerPad, footerMid);
+
+  // "© 2026 ALL RIGHTS RESERVED" — bottom right
+  ctx.textAlign = "right";
+  ctx.fillText("\u00A9 2026 ALL RIGHTS RESERVED", cw - outerPad, footerMid);
 }
 
 /* ═══════════════════════════════════════════════
