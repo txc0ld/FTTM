@@ -1528,7 +1528,7 @@ function drawGrid(ctx, _img, _id, _meta, _evaderImg, gridImages, gridSize) {
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   ctx.font = `bold 52px "${HEADING_FONT}", serif`;
-  ctx.fillText("DEATH & TAXES", cw / 2, headerH / 2);
+  ctx.fillText("DEATH AND TAXES", cw / 2, headerH / 2);
 
   // Reaper icon — top right
   if (reaperImg) {
