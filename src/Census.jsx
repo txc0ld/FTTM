@@ -505,7 +505,14 @@ export default function Census({ mobile }) {
                       }}>
                         {i + 1}
                       </span>
-                      <span style={{ fontWeight: 700 }}>{h.name}</span>
+                      <a
+                        href={`https://opensea.io/assets/ethereum/${h.status === "ELIMINATED" ? EVADER_CONTRACT : CONTRACT}/${h.id}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{ fontWeight: 700, color: fg, textDecoration: "underline" }}
+                      >
+                        {h.name}
+                      </a>
                       <span style={{
                         fontSize: mobile ? 11 : 13,
                         opacity: 0.5,
