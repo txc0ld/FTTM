@@ -1588,7 +1588,7 @@ function drawGrid(ctx, _img, _id, _meta, _evaderImg, gridImages, gridSize) {
 
   // "DEPT OF DEATH" — bottom left
   ctx.fillStyle = BK;
-  ctx.font = `bold 18px "${HEADING_FONT}", serif`;
+  ctx.font = `bold 18px "${BODY_FONT}", sans-serif`;
   ctx.textAlign = "left";
   ctx.textBaseline = "middle";
   ctx.fillText("DEPT OF DEATH", outerPad, footerMid);
