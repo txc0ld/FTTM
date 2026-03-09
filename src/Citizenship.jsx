@@ -25,7 +25,7 @@ function decodeSession(code) {
 
 function generateShareURL(friends) {
   const code = encodeSession(friends);
-  return `${window.location.origin}${window.location.pathname}?crew=${code}`;
+  return `${window.location.origin}/citizenship?crew=${code}`;
 }
 
 const LS_KEY = "dt_citizenship_friends";

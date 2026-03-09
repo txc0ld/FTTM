@@ -19,6 +19,19 @@ import { TEMPLATES, RENDERERS, buildWastedGif } from "./templates";
    ═══════════════════════════════════════════════ */
 const HEADING_FONT = "Bajern";
 
+const VALID_VIEWS = ["registry","riot","boneyard","killfeed","whalewatch","watchdog","census","taxtracker","citizenship"];
+
+function pathToView() {
+  const p = window.location.pathname.replace(/^\/+|\/+$/g, "").toLowerCase();
+  // Support ?crew= deep link for citizenship
+  const params = new URLSearchParams(window.location.search);
+  if (params.get("crew")) return "citizenship";
+  if (p && VALID_VIEWS.includes(p)) return p;
+  // Legacy ?view= support
+  if (params.get("view") && VALID_VIEWS.includes(params.get("view"))) return params.get("view");
+  return "registry";
+}
+
 const EMPTY_META = {
   class: "UNKNOWN",
   insured: "",
@@ -30,12 +43,7 @@ export default function App() {
   const { dark, toggle: toggleTheme, colors } = useTheme();
   const { muted, toggle: toggleSound, playClick, playStamp } = useSound();
 
-  const [view, setView] = useState(() => {
-    const params = new URLSearchParams(window.location.search);
-    if (params.get("crew")) return "citizenship";
-    if (params.get("view")) return params.get("view");
-    return "registry";
-  });
+  const [view, setView] = useState(pathToView);
   const [wallet, setWallet] = useState("");
   const [ownedNFTs, setOwnedNFTs] = useState([]);
   const [cid, setCid] = useState("");
@@ -76,6 +84,8 @@ export default function App() {
   const [menuOpen, setMenuOpen] = useState(false);
   const navTo = (v) => {
     playClick();
+    const path = v === "registry" ? "/" : `/${v}`;
+    window.history.pushState({}, "", path);
     setView(v);
     setIntelOpen(false);
     setReportsOpen(false);
@@ -87,6 +97,10 @@ export default function App() {
   useEffect(() => {
     const onResize = () => setMobile(window.innerWidth < 768);
     window.addEventListener("resize", onResize);
+
+    // Browser back/forward navigation
+    const onPopState = () => setView(pathToView());
+    window.addEventListener("popstate", onPopState);
 
     // Konami code easter egg
     const konami = [38,38,40,40,37,39,37,39,66,65];
@@ -104,7 +118,7 @@ export default function App() {
       }
     };
     window.addEventListener("keydown", onKey);
-    return () => { window.removeEventListener("resize", onResize); window.removeEventListener("keydown", onKey); };
+    return () => { window.removeEventListener("resize", onResize); window.removeEventListener("popstate", onPopState); window.removeEventListener("keydown", onKey); };
   }, []);
 
   useEffect(() => {
