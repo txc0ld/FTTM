@@ -14,7 +14,10 @@ async function fetchOSNfts(wallet, slug, osKey) {
     const res = await fetch(url.toString(), {
       headers: { "x-api-key": osKey },
     });
-    if (!res.ok) break;
+    if (!res.ok) {
+      const text = await res.text().catch(() => "");
+      throw new Error(`OpenSea ${res.status}: ${text.slice(0, 200)}`);
+    }
     const data = await res.json();
     if (data.nfts) nfts.push(...data.nfts);
     next = data.next || null;
@@ -38,10 +41,16 @@ export default async function handler(req, res) {
   if (!wallet) return res.status(400).json({ error: "wallet parameter required" });
 
   try {
-    const [citizens, evaders] = await Promise.all([
+    const [citizenResult, evaderResult] = await Promise.allSettled([
       fetchOSNfts(wallet, OS_CITIZEN_SLUG, osKey),
       fetchOSNfts(wallet, OS_EVADER_SLUG, osKey),
     ]);
+    // If both failed, propagate the error
+    if (citizenResult.status === "rejected" && evaderResult.status === "rejected") {
+      throw citizenResult.reason;
+    }
+    const citizens = citizenResult.status === "fulfilled" ? citizenResult.value : [];
+    const evaders = evaderResult.status === "fulfilled" ? evaderResult.value : [];
 
     const result = [
       ...citizens.map((n) => ({
