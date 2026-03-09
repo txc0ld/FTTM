@@ -1,7 +1,6 @@
 const CONTRACT = "0x4f249b2dc6cecbd549a0c354bbfc4919e8c5d3ae";
 const EVADER_CONTRACT = "0x075f90ff6b89a1c164fb352bebd0a16f55804ca2";
 const GAME_CONTRACT = "0xa448c7f618087dda1a3b128cad8a424fbae4b71f";
-const RPC = "https://eth.llamarpc.com";
 const SEL_BRIBE_BALANCE = "0xca58643b"; // bribeBalance(uint256)
 
 // In-memory cache (persists across warm invocations)
@@ -39,9 +38,13 @@ function pad32(tokenId) {
   return BigInt(tokenId).toString(16).padStart(64, "0");
 }
 
-async function fetchBribeBalances(tokenIds) {
-  const CHUNK = 50; // Small chunks to avoid LlamaRPC rate limits
+async function fetchBribeBalances(key, maxTokenId) {
+  // Use Alchemy RPC (higher rate limits than LlamaRPC)
+  const rpc = `https://eth-mainnet.g.alchemy.com/v2/${key}`;
+  const CHUNK = 200;
   const results = {};
+  const tokenIds = [];
+  for (let i = 1; i <= maxTokenId; i++) tokenIds.push(i);
 
   for (let i = 0; i < tokenIds.length; i += CHUNK) {
     const chunk = tokenIds.slice(i, i + CHUNK);
@@ -52,42 +55,25 @@ async function fetchBribeBalances(tokenIds) {
       id: i + idx + 1,
     }));
 
-    let json;
-    for (let attempt = 0; attempt < 3; attempt++) {
-      const res = await fetch(RPC, {
+    try {
+      const res = await fetch(rpc, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       });
-      if (!res.ok) {
-        if (attempt < 2) { await new Promise(r => setTimeout(r, 500)); continue; }
-        break;
-      }
-      json = await res.json();
-      if (Array.isArray(json)) break;
-      // Non-array response means rate limit text — retry
-      if (attempt < 2) { await new Promise(r => setTimeout(r, 500)); continue; }
-      json = null;
+      if (!res.ok) continue;
+      const json = await res.json();
+      if (!Array.isArray(json)) continue;
+
+      json.forEach((r, idx) => {
+        const tid = String(chunk[idx]);
+        if (r.result && r.result !== "0x") {
+          results[tid] = parseInt(r.result, 16);
+        }
+      });
+    } catch {
+      // Skip chunk on error
     }
-
-    if (!json || !Array.isArray(json)) {
-      // Skip this chunk, leave results as 0
-      if (i + CHUNK < tokenIds.length) await new Promise(r => setTimeout(r, 300));
-      continue;
-    }
-
-    // Map results back to token IDs
-    json.forEach((r, idx) => {
-      const tid = chunk[idx];
-      if (r.result && r.result !== "0x") {
-        results[tid] = parseInt(r.result, 16);
-      } else {
-        results[tid] = 0;
-      }
-    });
-
-    // Rate limit pause between chunks
-    if (i + CHUNK < tokenIds.length) await new Promise(r => setTimeout(r, 150));
   }
 
   return results;
@@ -110,14 +96,6 @@ function aggregate(mainNfts, evaderNfts, bribeBalances) {
   let unbribedCount = 0;
   let bribedElimCount = 0;
 
-  // Collect evader token IDs from their names (e.g. "Tax Evader #123" -> "123")
-  const evaderCitizenIds = new Set();
-  evaderNfts.forEach((nft) => {
-    const name = nft.name || nft.raw?.metadata?.name || "";
-    const m = name.match(/(\d+)\s*$/);
-    if (m) evaderCitizenIds.add(m[1]);
-  });
-
   mainNfts.forEach((nft) => {
     const attrs = parseAttrs(nft);
     const tokenId = nft.tokenId || "0";
@@ -138,8 +116,7 @@ function aggregate(mainNfts, evaderNfts, bribeBalances) {
     const cls = (attrs.class || attrs.type || "UNKNOWN").toUpperCase();
     classEliminated[cls] = (classEliminated[cls] || 0) + 1;
 
-    // Check if the original citizen had a bribe (balance would be 0 now since eliminated,
-    // but we can check the class — wealthy citizens start with bribes)
+    // Wealthy citizens start with bribes
     const citizenClass = (attrs.class || attrs.type || "").toLowerCase();
     if (citizenClass === "wealthy") bribedElimCount++;
   });
@@ -164,15 +141,15 @@ export default async function handler(req, res) {
   }
 
   try {
-    // Scrape both contracts in parallel
-    const [mainNfts, evaderNfts] = await Promise.all([
+    // Run all three tasks in parallel:
+    // 1. Scrape main contract (class/insurance data)
+    // 2. Scrape evader contract (elimination data)
+    // 3. Query bribe balances for tokens 1-5000 (covers full supply)
+    const [mainNfts, evaderNfts, bribeBalances] = await Promise.all([
       scrapeContract(key, CONTRACT),
       scrapeContract(key, EVADER_CONTRACT),
+      fetchBribeBalances(key, 5000),
     ]);
-
-    // Get bribe balances for all living citizens from game contract
-    const tokenIds = mainNfts.map((n) => n.tokenId || "0");
-    const bribeBalances = await fetchBribeBalances(tokenIds);
 
     const result = aggregate(mainNfts, evaderNfts, bribeBalances);
     cached = result;
