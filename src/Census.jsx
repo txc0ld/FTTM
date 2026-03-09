@@ -33,6 +33,7 @@ export default function Census({ mobile }) {
   const [bribedCount, setBribedCount] = useState(0);
   const [unbribedCount, setUnbribedCount] = useState(0);
   const [bribedElimCount, setBribedElimCount] = useState(0);
+  const [bribeHolders, setBribeHolders] = useState([]);
   const [loading, setLoading] = useState(false);
   const [progress, setProgress] = useState("");
   const [error, setError] = useState("");
@@ -52,6 +53,7 @@ export default function Census({ mobile }) {
       if (cached.bribedCount != null) setBribedCount(cached.bribedCount);
       if (cached.unbribedCount != null) setUnbribedCount(cached.unbribedCount);
       if (cached.bribedElimCount != null) setBribedElimCount(cached.bribedElimCount);
+      if (cached.bribeHolders) setBribeHolders(cached.bribeHolders);
     }
     fetchContractMetaData();
   }, []);
@@ -77,6 +79,7 @@ export default function Census({ mobile }) {
     setBribedCount(r.bribedCount);
     setUnbribedCount(r.unbribedCount);
     setBribedElimCount(r.bribedElimCount);
+    setBribeHolders(r.bribeHolders || []);
     saveCensusCache(r);
   };
 
@@ -542,6 +545,68 @@ export default function Census({ mobile }) {
                   </div>
                   <div style={{ fontSize: mobile ? 12 : 16, marginTop: 4, opacity: 0.6 }}>
                     {((bribedElimCount / bribedCount) * 100).toFixed(1)}% BRIBE FAILURE RATE
+                  </div>
+                </div>
+              )}
+
+              {/* BRIBE LEADERBOARD */}
+              {bribeHolders.length > 0 && (
+                <div style={{ border: `3px solid ${fg}` }}>
+                  <div style={{
+                    background: fg, color: bg,
+                    padding: mobile ? "10px 16px" : "12px 20px",
+                    fontSize: mobile ? 16 : 20,
+                    fontWeight: 800,
+                    fontFamily: `"${HEADING_FONT}", serif`,
+                    letterSpacing: 3,
+                  }}>
+                    BRIBE HOLDERS — {bribeHolders.length} CITIZENS
+                  </div>
+                  <div style={{ maxHeight: 400, overflowY: "auto" }}>
+                    {bribeHolders.map((h, i) => (
+                      <div
+                        key={h.id}
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                          padding: mobile ? "8px 12px" : "10px 20px",
+                          borderBottom: i < bribeHolders.length - 1 ? `1px solid ${fg}33` : "none",
+                          fontSize: mobile ? 14 : 16,
+                          fontFamily: `"${BODY_FONT}", monospace`,
+                        }}
+                      >
+                        <div style={{ display: "flex", alignItems: "center", gap: mobile ? 8 : 16 }}>
+                          <span style={{
+                            fontWeight: 800,
+                            opacity: 0.4,
+                            width: mobile ? 28 : 36,
+                            fontSize: mobile ? 12 : 14,
+                          }}>
+                            {i + 1}
+                          </span>
+                          <span style={{ fontWeight: 700 }}>{h.name}</span>
+                          <span style={{
+                            fontSize: mobile ? 11 : 13,
+                            opacity: 0.5,
+                            textTransform: "uppercase",
+                          }}>
+                            {h.class}
+                          </span>
+                        </div>
+                        <div style={{
+                          background: fg,
+                          color: bg,
+                          padding: "2px 10px",
+                          fontWeight: 800,
+                          fontSize: mobile ? 14 : 16,
+                          minWidth: mobile ? 30 : 40,
+                          textAlign: "center",
+                        }}>
+                          {h.bribes}
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
               )}

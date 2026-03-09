@@ -96,6 +96,8 @@ function aggregate(mainNfts, evaderNfts, bribeBalances) {
   let unbribedCount = 0;
   let bribedElimCount = 0;
 
+  const bribeHolders = []; // { id, name, class, bribes }
+
   mainNfts.forEach((nft) => {
     const attrs = parseAttrs(nft);
     const tokenId = nft.tokenId || "0";
@@ -107,8 +109,13 @@ function aggregate(mainNfts, evaderNfts, bribeBalances) {
     else uninsuredCount++;
 
     const bal = bribeBalances[tokenId] || 0;
-    if (bal > 0) bribedCount++;
-    else unbribedCount++;
+    if (bal > 0) {
+      bribedCount++;
+      const name = nft.name || nft.raw?.metadata?.name || `Citizen #${tokenId}`;
+      bribeHolders.push({ id: tokenId, name, class: cls, bribes: bal });
+    } else {
+      unbribedCount++;
+    }
   });
 
   evaderNfts.forEach((nft) => {
@@ -121,7 +128,8 @@ function aggregate(mainNfts, evaderNfts, bribeBalances) {
     if (citizenClass === "wealthy") bribedElimCount++;
   });
 
-  return { classes, classEliminated, insuredCount, uninsuredCount, bribedCount, unbribedCount, bribedElimCount };
+  bribeHolders.sort((a, b) => b.bribes - a.bribes || parseInt(a.id) - parseInt(b.id));
+  return { classes, classEliminated, insuredCount, uninsuredCount, bribedCount, unbribedCount, bribedElimCount, bribeHolders };
 }
 
 export default async function handler(req, res) {
