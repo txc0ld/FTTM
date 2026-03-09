@@ -238,7 +238,7 @@ export default function Census({ mobile }) {
 
   const elimFromCensus = Object.values(classEliminated).reduce((s, v) => s + v, 0);
   const evaderSupply = evaderMeta?.totalSupply || evaderMeta?.openSeaMetadata?.totalSupply || null;
-  const elimTotal = evaderSupply ? parseInt(evaderSupply) : elimFromCensus || 0;
+  const elimTotal = elimFromCensus || (evaderSupply ? parseInt(evaderSupply) : 0);
   const livingSupply = contractMeta?.totalSupply || contractMeta?.openSeaMetadata?.totalSupply || "?";
   const totalSupply = livingSupply !== "?" && elimTotal ? parseInt(livingSupply) + elimTotal : livingSupply;
   const floorPrice = contractMeta?.openSeaMetadata?.floorPrice || "?";
