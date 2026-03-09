@@ -40,8 +40,7 @@ function pad32(tokenId) {
 }
 
 async function fetchBribeBalances(tokenIds) {
-  // Batch RPC calls in chunks of 500 to avoid payload limits
-  const CHUNK = 500;
+  const CHUNK = 50; // Small chunks to avoid LlamaRPC rate limits
   const results = {};
 
   for (let i = 0; i < tokenIds.length; i += CHUNK) {
@@ -53,12 +52,29 @@ async function fetchBribeBalances(tokenIds) {
       id: i + idx + 1,
     }));
 
-    const res = await fetch(RPC, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
-    const json = await res.json();
+    let json;
+    for (let attempt = 0; attempt < 3; attempt++) {
+      const res = await fetch(RPC, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) {
+        if (attempt < 2) { await new Promise(r => setTimeout(r, 500)); continue; }
+        break;
+      }
+      json = await res.json();
+      if (Array.isArray(json)) break;
+      // Non-array response means rate limit text — retry
+      if (attempt < 2) { await new Promise(r => setTimeout(r, 500)); continue; }
+      json = null;
+    }
+
+    if (!json || !Array.isArray(json)) {
+      // Skip this chunk, leave results as 0
+      if (i + CHUNK < tokenIds.length) await new Promise(r => setTimeout(r, 300));
+      continue;
+    }
 
     // Map results back to token IDs
     json.forEach((r, idx) => {
@@ -69,6 +85,9 @@ async function fetchBribeBalances(tokenIds) {
         results[tid] = 0;
       }
     });
+
+    // Rate limit pause between chunks
+    if (i + CHUNK < tokenIds.length) await new Promise(r => setTimeout(r, 150));
   }
 
   return results;
