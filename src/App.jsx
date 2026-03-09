@@ -11,7 +11,7 @@ import ShareCard from "./ShareCard";
 import { useTheme } from "./shared/theme";
 import { useSound } from "./shared/sound";
 import { loadImage } from "./shared/utils";
-import { fetchWalletNFTs, fetchTokenById, fetchEvaderById, CONTRACT } from "./shared/api";
+import { fetchWalletNFTs, fetchWalletEvaders, fetchTokenById, fetchEvaderById, CONTRACT } from "./shared/api";
 import { W, H, HEADING_FONT as CANVAS_HEADING, BODY_FONT, loadAssets } from "./shared/canvas";
 import { TEMPLATES, RENDERERS, buildWastedGif } from "./templates";
 /* ═══════════════════════════════════════════════
@@ -181,16 +181,34 @@ export default function App() {
     setGifPreviewUrl(null);
   }, [render]);
 
-  // Load grid images from owned NFTs
+  // Load grid images from owned NFTs (citizens + evaders)
+  const [gridNFTs, setGridNFTs] = useState([]);
   useEffect(() => {
-    if (tpl !== "grid" || !ownedNFTs.length) { setGridImages([]); return; }
+    if (tpl !== "grid" || !wallet) { setGridNFTs([]); setGridImages([]); return; }
+    let cancelled = false;
+    (async () => {
+      try {
+        const [evaders] = await Promise.all([
+          fetchWalletEvaders(wallet),
+        ]);
+        const combined = [...ownedNFTs, ...evaders];
+        if (!cancelled) setGridNFTs(combined);
+      } catch {
+        if (!cancelled) setGridNFTs([...ownedNFTs]);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [tpl, wallet, ownedNFTs]);
+
+  useEffect(() => {
+    if (tpl !== "grid" || !gridNFTs.length) { setGridImages([]); return; }
     let cancelled = false;
     (async () => {
       const needed = gridSize * gridSize;
       const loaded = [];
-      for (let i = 0; i < Math.min(needed, ownedNFTs.length); i++) {
+      for (let i = 0; i < Math.min(needed, gridNFTs.length); i++) {
         if (cancelled) return;
-        const nft = ownedNFTs[i];
+        const nft = gridNFTs[i];
         if (nft.image) {
           try { loaded.push(await loadImage(nft.image)); } catch { loaded.push(null); }
         } else {
@@ -200,7 +218,7 @@ export default function App() {
       if (!cancelled) setGridImages(loaded);
     })();
     return () => { cancelled = true; };
-  }, [tpl, gridSize, ownedNFTs]);
+  }, [tpl, gridSize, gridNFTs]);
 
   // Auto-fetch evader image when citizen image loads (for WASTED template transition)
   // Evader names contain citizen ID; check Boneyard cache for image URL
@@ -1408,9 +1426,13 @@ export default function App() {
                     </button>
                   ))}
                 </div>
-                {!ownedNFTs.length && (
+                {!wallet ? (
                   <div style={{ fontSize: 11, opacity: 0.6, marginTop: 6, fontFamily: `"${BODY_FONT}", monospace` }}>
                     CONNECT WALLET TO POPULATE GRID
+                  </div>
+                ) : gridNFTs.length > 0 && (
+                  <div style={{ fontSize: 11, opacity: 0.6, marginTop: 6, fontFamily: `"${BODY_FONT}", monospace` }}>
+                    {gridNFTs.length} NFT{gridNFTs.length !== 1 ? "S" : ""} AVAILABLE (CITIZENS + EVADERS)
                   </div>
                 )}
               </div>

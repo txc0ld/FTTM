@@ -117,6 +117,37 @@ export async function fetchTokenById(tokenId) {
   return parseMeta(data);
 }
 
+export async function fetchWalletEvaders(wallet) {
+  let allNfts = [];
+  let pageKey = null;
+  let pages = 0;
+
+  do {
+    const params = {
+      owner: wallet,
+      "contractAddresses[]": EVADER_CONTRACT,
+      withMetadata: "true",
+      pageSize: "100",
+    };
+    if (pageKey) params.pageKey = pageKey;
+    const data = await alchemyGet("getNFTsForOwner", params);
+    if (data.ownedNfts) allNfts = allNfts.concat(data.ownedNfts);
+    pageKey = data.pageKey;
+    pages++;
+    if (pages >= 5) break;
+  } while (pageKey);
+
+  return allNfts.map((nft) => {
+    const parsed = parseMeta(nft);
+    const ipfsImage =
+      nft.image?.originalUrl ||
+      (nft.raw?.metadata?.image || "").replace("ipfs://", "https://ipfs.io/ipfs/");
+    if (ipfsImage) parsed.image = ipfsImage;
+    parsed.isEvader = true;
+    return parsed;
+  });
+}
+
 export async function fetchEvaderById(tokenId) {
   const data = await alchemyGet("getNFTMetadata", {
     contractAddress: EVADER_CONTRACT,
