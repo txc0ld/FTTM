@@ -55,7 +55,7 @@ export default function App() {
   const file = useRef(null);
 
   const [mobile, setMobile] = useState(window.innerWidth < 768);
-  const [tickerVals, setTickerVals] = useState({ day: 2, time: "00:00 UTC", taxRate: "0.00138" });
+  const [tickerVals, setTickerVals] = useState({ day: 2, time: "00:00 UTC", taxRate: "0.00138", treasury: null });
 
   // Dropdown state
   const [intelOpen, setIntelOpen] = useState(false);
@@ -110,22 +110,30 @@ export default function App() {
     const updateTicker = () => {
       const now = new Date();
       // Base: March 2, 2026 UTC 00:00:00
-      const baseDate = Date.UTC(2026, 2, 2); 
+      const baseDate = Date.UTC(2026, 2, 2);
       const diffMs = now.getTime() - baseDate;
       const day = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-      
+
       const taxValue = (day * 0.00069).toFixed(5);
-      
+
       const hh = now.getUTCHours().toString().padStart(2, "0");
       const mm = now.getUTCMinutes().toString().padStart(2, "0");
-      
+
+      // Read treasury from census cache
+      let treasury = null;
+      try {
+        const c = JSON.parse(localStorage.getItem("dt_census_cache"));
+        if (c?.treasuryBalance != null) treasury = c.treasuryBalance;
+      } catch {}
+
       setTickerVals({
         day,
         time: `${hh}:${mm} UTC`,
-        taxRate: taxValue
+        taxRate: taxValue,
+        treasury,
       });
     };
-    
+
     updateTicker();
     const int = setInterval(updateTicker, 60000);
     return () => clearInterval(int);
@@ -486,11 +494,13 @@ export default function App() {
       </div>
 
       {/* GLOBAL INFO TICKER */}
-      <div style={{ background: uiFg, color: uiBg, padding: mobile ? "6px 12px" : "8px 24px", display: "flex", justifyContent: "space-between", fontSize: mobile ? 14 : 16, fontWeight: "bold", letterSpacing: 1, textTransform: "uppercase", gap: mobile ? 8 : 0 }}>
+      <div style={{ background: uiFg, color: uiBg, padding: mobile ? "6px 12px" : "8px 24px", display: "flex", justifyContent: "space-between", fontSize: mobile ? 14 : 16, fontWeight: "bold", letterSpacing: 1, textTransform: "uppercase", gap: mobile ? 8 : 0, flexWrap: "wrap" }}>
          <span>{mobile ? `DAY ${tickerVals.day}` : `DAY: ${tickerVals.day} (${tickerVals.time})`}</span>
          <span>{mobile ? `${tickerVals.taxRate} ETH` : `TAX RATE: ${tickerVals.taxRate} ETH`}</span>
          {!mobile && <span>POPULATION: 6969 CITIZENS</span>}
          {mobile && <span>6969</span>}
+         {tickerVals.treasury != null && <span>{mobile ? `${tickerVals.treasury} ETH` : `TREASURY: ${tickerVals.treasury} ETH`}</span>}
+         {!mobile && tickerVals.treasury != null && <span>SPLIT: {(tickerVals.treasury / 69).toFixed(4)} ETH</span>}
       </div>
 
       <div style={{ flex: 1, display: "flex", position: "relative", flexDirection: "column" }}>
