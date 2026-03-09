@@ -806,7 +806,7 @@ export default function DailyRiot({ mobile, ownedNFTs, wallet, setWallet, handle
           {c1 && (
             <div className={revealed ? "riot-slide-l" : ""} style={{ ...cardStyle("left"), opacity: revealed ? 1 : 0 }}>
               <FighterImg src={c1.image} alt={`#${c1.id}`} isEvader={c1.isEvader} style={{ width: "100%", aspectRatio: '1', border: `2px solid ${BK}`, imageRendering: 'pixelated' }} />
-              <div style={{ fontSize: mobile ? 28 : 36, fontFamily: `"${HEADING_FONT}", monospace`, textAlign: 'center', marginTop: 16 }}>{fighterLabel(c1)}</div>
+              <div style={{ fontSize: mobile ? 28 : 36, fontFamily: `"${BODY_FONT}", monospace`, textAlign: 'center', marginTop: 16 }}>{fighterLabel(c1)}</div>
               <div style={{ fontSize: 16, textAlign: 'center', textTransform: 'uppercase', marginBottom: 4, fontWeight: "bold" }}>CLASS: {c1.class}</div>
               <OwnerTag owner={c1Owner} />
               {c1.isEvader && <div style={{ fontSize: 14, textAlign: "center", fontWeight: 700, color: colors.error }}>ELIMINATED</div>}
@@ -830,7 +830,7 @@ export default function DailyRiot({ mobile, ownedNFTs, wallet, setWallet, handle
           {c2 && (
             <div className={revealed ? "riot-slide-r" : ""} style={{ ...cardStyle("right"), opacity: revealed ? 1 : 0 }}>
               <FighterImg src={c2.image} alt={`#${c2.id}`} isEvader={c2.isEvader} style={{ width: "100%", aspectRatio: '1', border: `2px solid ${BK}`, imageRendering: 'pixelated' }} />
-              <div style={{ fontSize: mobile ? 28 : 36, fontFamily: `"${HEADING_FONT}", monospace`, textAlign: 'center', marginTop: 16 }}>{fighterLabel(c2)}</div>
+              <div style={{ fontSize: mobile ? 28 : 36, fontFamily: `"${BODY_FONT}", monospace`, textAlign: 'center', marginTop: 16 }}>{fighterLabel(c2)}</div>
               <div style={{ fontSize: 16, textAlign: 'center', textTransform: 'uppercase', marginBottom: 4, fontWeight: "bold" }}>CLASS: {c2.class}</div>
               <OwnerTag owner={c2Owner} />
               {c2.isEvader && <div style={{ fontSize: 14, textAlign: "center", fontWeight: 700, color: colors.error }}>ELIMINATED</div>}
@@ -958,7 +958,7 @@ export default function DailyRiot({ mobile, ownedNFTs, wallet, setWallet, handle
                   </div>
                   <div style={{
                     fontSize: mobile ? 13 : 18, fontWeight: 800,
-                    fontFamily: `"${HEADING_FONT}", monospace`, textAlign: "center",
+                    fontFamily: `"${BODY_FONT}", monospace`, textAlign: "center",
                   }}>
                     {label}
                   </div>
@@ -1051,7 +1051,7 @@ export default function DailyRiot({ mobile, ownedNFTs, wallet, setWallet, handle
                   }}>
                     <FighterImg src={c.image} alt={label} isEvader={c.isEvader} style={{ width: mobile ? "100%" : 160, aspectRatio: "1", imageRendering: "pixelated", border: `3px solid ${BK}` }} />
                     <div style={{ flex: 1, width: "100%" }}>
-                      <div style={{ fontSize: mobile ? 24 : 32, fontFamily: `"${HEADING_FONT}", monospace`, marginBottom: 8 }}>
+                      <div style={{ fontSize: mobile ? 24 : 32, fontFamily: `"${BODY_FONT}", monospace`, marginBottom: 8 }}>
                         {c.isEvader ? `EVADER #${c.id}` : `CITIZEN #${c.id}`}
                       </div>
                       {c.class && <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 12, textTransform: "uppercase", letterSpacing: 2 }}>CLASS: {c.class}</div>}
