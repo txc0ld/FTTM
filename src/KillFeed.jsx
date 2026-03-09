@@ -160,15 +160,15 @@ export default function KillFeed({ mobile }) {
           fontFamily: `"${BODY_FONT}", monospace`,
         }}>
           <div>
-            <span style={{ fontSize: mobile ? 24 : 36, fontWeight: 900, fontFamily: `"${HEADING_FONT}", monospace` }}>{data.totalKills || 0}</span>
+            <span style={{ fontSize: mobile ? 24 : 36, fontWeight: 900 }}>{data.totalKills || 0}</span>
             <span style={{ fontSize: mobile ? 11 : 14, opacity: 0.6, marginLeft: 8 }}>KILLS</span>
           </div>
           <div>
-            <span style={{ fontSize: mobile ? 24 : 36, fontWeight: 900, fontFamily: `"${HEADING_FONT}", monospace` }}>{data.totalAudits || 0}</span>
+            <span style={{ fontSize: mobile ? 24 : 36, fontWeight: 900 }}>{data.totalAudits || 0}</span>
             <span style={{ fontSize: mobile ? 11 : 14, opacity: 0.6, marginLeft: 8 }}>AUDITS</span>
           </div>
           <div>
-            <span style={{ fontSize: mobile ? 24 : 36, fontWeight: 900, fontFamily: `"${HEADING_FONT}", monospace` }}>{data.currentEpoch || 0}</span>
+            <span style={{ fontSize: mobile ? 24 : 36, fontWeight: 900 }}>{data.currentEpoch || 0}</span>
             <span style={{ fontSize: mobile ? 11 : 14, opacity: 0.6, marginLeft: 8 }}>EPOCH</span>
           </div>
         </div>
