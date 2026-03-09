@@ -231,9 +231,9 @@ export default function Census({ mobile }) {
     });
   };
 
-  const livingCount = classes ? Object.values(classes).reduce((s, v) => s + v, 0) : null;
+  const totalSupply = classes ? Object.values(classes).reduce((s, v) => s + v, 0) : null;
   const elimCount = Object.values(classEliminated).reduce((s, v) => s + v, 0) || null;
-  const totalSupply = livingCount && elimCount ? livingCount + elimCount : "?";
+  const livingCount = totalSupply && elimCount ? totalSupply - elimCount : null;
   const floorPrice = contractMeta?.openSeaMetadata?.floorPrice || "?";
 
   const hasInsurance = insuredCount > 0 || uninsuredCount > 0;
