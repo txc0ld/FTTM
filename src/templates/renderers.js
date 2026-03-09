@@ -1514,20 +1514,47 @@ function drawGrid(ctx, _img, _id, _meta, _evaderImg, gridImages, gridSize) {
   const ch = ctx.canvas.height;
   ctx.clearRect(0, 0, cw, ch);
   const n = gridSize || 3;
-  const gap = Math.max(2, Math.round(4 / (n / 3)));
-  const totalGap = gap * (n + 1);
-  const cellSize = (cw - totalGap) / n;
 
   // Background
-  ctx.fillStyle = BK;
+  ctx.fillStyle = BG;
   ctx.fillRect(0, 0, cw, ch);
+
+  // Header area
+  const headerH = 100;
+  const pad = 24;
+
+  // Title — "DEATH & TAXES" centered
+  ctx.fillStyle = BK;
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.font = `bold 52px "${HEADING_FONT}", serif`;
+  ctx.fillText("DEATH & TAXES", cw / 2, headerH / 2);
+
+  // Reaper icon — top right
+  if (reaperImg) {
+    const iconH = 70;
+    const aspect = reaperImg.width / reaperImg.height;
+    const iconW = iconH * aspect;
+    ctx.drawImage(reaperImg, cw - iconW - pad, (headerH - iconH) / 2, iconW, iconH);
+  }
+
+  // Divider line
+  ctx.fillStyle = BK;
+  ctx.fillRect(pad, headerH - 4, cw - pad * 2, 4);
+
+  // Grid
+  const gridTop = headerH + 8;
+  const gridArea = cw;
+  const gap = Math.max(2, Math.round(4 / (n / 3)));
+  const totalGap = gap * (n + 1);
+  const cellSize = (gridArea - totalGap) / n;
 
   const imgs = gridImages || [];
   for (let row = 0; row < n; row++) {
     for (let col = 0; col < n; col++) {
       const idx = row * n + col;
       const x = gap + col * (cellSize + gap);
-      const y = gap + row * (cellSize + gap);
+      const y = gridTop + gap + row * (cellSize + gap);
 
       if (idx < imgs.length && imgs[idx]) {
         const im = imgs[idx];
@@ -1541,12 +1568,8 @@ function drawGrid(ctx, _img, _id, _meta, _evaderImg, gridImages, gridSize) {
         ctx.drawImage(im, x + (cellSize - sw) / 2, y + (cellSize - sh) / 2, sw, sh);
         ctx.restore();
       } else {
-        // Empty cell
-        ctx.fillStyle = "#111";
+        ctx.fillStyle = BK;
         ctx.fillRect(x, y, cellSize, cellSize);
-        ctx.strokeStyle = "#333";
-        ctx.lineWidth = 1;
-        ctx.strokeRect(x, y, cellSize, cellSize);
       }
     }
   }
