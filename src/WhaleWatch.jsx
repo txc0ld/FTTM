@@ -3,7 +3,7 @@ import { useTheme } from "./shared/theme";
 import { useSound } from "./shared/sound";
 import { CONTRACT, fetchOwnersForContract } from "./shared/api";
 
-const HEADING_FONT = "Bajern";
+const HEADING_FONT = "DeptBody";
 const BODY_FONT = "DeptBody";
 const LS_KEY = "dt_owners_cache";
 const FOUR_HOURS = 4 * 60 * 60 * 1000;
@@ -137,7 +137,7 @@ export default function WhaleWatch({ mobile }) {
       <div style={{ borderBottom: `4px solid ${fg}`, paddingBottom: 16 }}>
         <div style={{ display: "flex", flexDirection: mobile ? "column" : "row", justifyContent: "space-between", alignItems: mobile ? "flex-start" : "center", gap: 12 }}>
           <div>
-            <div style={{ fontSize: mobile ? 28 : 48, fontFamily: `"${HEADING_FONT}", serif`, lineHeight: 1 }}>
+            <div style={{ fontSize: mobile ? 28 : 48, fontFamily: `"${HEADING_FONT}", monospace`, lineHeight: 1 }}>
               WHALE WATCH
             </div>
             <div style={{ fontSize: mobile ? 14 : 18, marginTop: 8, opacity: 0.7 }}>
@@ -156,7 +156,7 @@ export default function WhaleWatch({ mobile }) {
               fontSize: mobile ? 14 : 18,
               fontWeight: 800,
               cursor: loading ? "wait" : "pointer",
-              fontFamily: `"${HEADING_FONT}", serif`,
+              fontFamily: `"${HEADING_FONT}", monospace`,
               whiteSpace: "nowrap",
             }}
           >
@@ -260,7 +260,7 @@ export default function WhaleWatch({ mobile }) {
               fontSize: 18,
               fontWeight: 800,
               cursor: "pointer",
-              fontFamily: `"${HEADING_FONT}", serif`,
+              fontFamily: `"${HEADING_FONT}", monospace`,
             }}
           >
             SCAN NOW

@@ -10,7 +10,7 @@ import {
 } from "./shared/api";
 import { sR } from "./shared/utils";
 
-const HEADING_FONT = "Bajern";
+const HEADING_FONT = "DeptBody";
 const BODY_FONT = "DeptBody";
 
 /* ═══════════════════════════════════════
@@ -238,7 +238,7 @@ export default function DailyRiot({ mobile, ownedNFTs, wallet, setWallet, handle
         color: active ? BG : BK,
         border: `2px solid ${BK}`,
         padding: "6px 12px",
-        fontFamily: `"${HEADING_FONT}", serif`,
+        fontFamily: `"${HEADING_FONT}", monospace`,
         fontSize: mobile ? 13 : 16,
         cursor: "pointer",
         textTransform: "lowercase",
@@ -589,12 +589,12 @@ export default function DailyRiot({ mobile, ownedNFTs, wallet, setWallet, handle
 
     // Title
     ctx.fillStyle = colors.fg;
-    ctx.font = `bold 48px "${HEADING_FONT}", serif`;
+    ctx.font = `bold 48px "${HEADING_FONT}", monospace`;
     ctx.textAlign = "center";
     ctx.fillText("RIOT CLUB", W / 2, 70);
 
     // VS
-    ctx.font = `bold 80px "${HEADING_FONT}", serif`;
+    ctx.font = `bold 80px "${HEADING_FONT}", monospace`;
     ctx.globalAlpha = 0.1;
     ctx.fillText("VS", W / 2, H / 2 + 20);
     ctx.globalAlpha = 1;
@@ -625,16 +625,16 @@ export default function DailyRiot({ mobile, ownedNFTs, wallet, setWallet, handle
 
     // Winner label
     ctx.fillStyle = colors.fg;
-    ctx.font = `bold 28px "${HEADING_FONT}", serif`;
+    ctx.font = `bold 28px "${HEADING_FONT}", monospace`;
     ctx.fillText("WINNER", W / 4, 120);
-    ctx.font = `bold 36px "${HEADING_FONT}", serif`;
+    ctx.font = `bold 36px "${HEADING_FONT}", monospace`;
     ctx.fillText(fighterLabel(lastVote.winner).toUpperCase(), W / 4, 540);
 
     // Loser label
     ctx.globalAlpha = 0.5;
-    ctx.font = `bold 28px "${HEADING_FONT}", serif`;
+    ctx.font = `bold 28px "${HEADING_FONT}", monospace`;
     ctx.fillText("DEFEATED", (W / 4) * 3, 120);
-    ctx.font = `bold 36px "${HEADING_FONT}", serif`;
+    ctx.font = `bold 36px "${HEADING_FONT}", monospace`;
     ctx.fillText(fighterLabel(lastVote.loser).toUpperCase(), (W / 4) * 3, 540);
     ctx.globalAlpha = 1;
 
@@ -668,7 +668,7 @@ export default function DailyRiot({ mobile, ownedNFTs, wallet, setWallet, handle
     if (!riotWallet) {
       return (
         <div style={{ textAlign: "center", marginTop: 60, display: "flex", flexDirection: "column", alignItems: "center", gap: 20 }}>
-          <div style={{ fontSize: mobile ? 28 : 48, fontFamily: `"${HEADING_FONT}", serif` }}>WALLET REQUIRED</div>
+          <div style={{ fontSize: mobile ? 28 : 48, fontFamily: `"${HEADING_FONT}", monospace` }}>WALLET REQUIRED</div>
           <div style={{ fontSize: mobile ? 14 : 18, opacity: 0.7, maxWidth: 500 }}>
             CONNECT YOUR WALLET TO CAST VOTES. EACH WALLET GETS 1 DAILY RIOT VOTE + 10 STREET RIOT VOTES PER DAY.
           </div>
@@ -689,7 +689,7 @@ export default function DailyRiot({ mobile, ownedNFTs, wallet, setWallet, handle
 
     if (riotLoading) {
       return (
-        <div style={{ fontSize: mobile ? 28 : 40, textAlign: 'center', marginTop: 100, fontFamily: `"${HEADING_FONT}", serif` }}>
+        <div style={{ fontSize: mobile ? 28 : 40, textAlign: 'center', marginTop: 100, fontFamily: `"${HEADING_FONT}", monospace` }}>
           SUMMONING COMBATANTS...
         </div>
       );
@@ -699,7 +699,7 @@ export default function DailyRiot({ mobile, ownedNFTs, wallet, setWallet, handle
       return (
         <div style={{ textAlign: "center", marginTop: 80 }}>
           <div style={{ fontSize: 24, fontWeight: 800, marginBottom: 20 }}>{riotError}</div>
-          <button onClick={fetchPair} style={{ background: BK, color: BG, border: "none", padding: "12px 24px", fontSize: 18, fontWeight: 800, cursor: "pointer", fontFamily: `"${HEADING_FONT}", serif` }}>
+          <button onClick={fetchPair} style={{ background: BK, color: BG, border: "none", padding: "12px 24px", fontSize: 18, fontWeight: 800, cursor: "pointer", fontFamily: `"${HEADING_FONT}", monospace` }}>
             RETRY
           </button>
         </div>
@@ -712,7 +712,7 @@ export default function DailyRiot({ mobile, ownedNFTs, wallet, setWallet, handle
     if (lastVote) {
       return (
         <div className="riot-fadeup" style={{ display: "flex", flexDirection: "column", alignItems: "center", width: "100%", gap: 24 }}>
-          <div style={{ fontSize: mobile ? 28 : 48, fontFamily: `"${HEADING_FONT}", serif`, textAlign: "center" }}>
+          <div style={{ fontSize: mobile ? 28 : 48, fontFamily: `"${HEADING_FONT}", monospace`, textAlign: "center" }}>
             {fighterLabel(lastVote.winner)} WINS
           </div>
           <div style={{ display: "flex", gap: 24, alignItems: "center", flexWrap: "wrap", justifyContent: "center" }}>
@@ -720,7 +720,7 @@ export default function DailyRiot({ mobile, ownedNFTs, wallet, setWallet, handle
               <FighterImg src={lastVote.winner.image} alt={fighterLabel(lastVote.winner)} isEvader={lastVote.winner.isEvader} style={{ width: mobile ? 140 : 200, height: mobile ? 140 : 200, imageRendering: "pixelated" }} />
               <div style={{ textAlign: "center", fontSize: 18, fontWeight: 800, marginTop: 8 }}>{fighterLabel(lastVote.winner)}</div>
             </div>
-            <div style={{ fontSize: 40, fontFamily: `"${HEADING_FONT}", serif`, opacity: 0.2 }}>VS</div>
+            <div style={{ fontSize: 40, fontFamily: `"${HEADING_FONT}", monospace`, opacity: 0.2 }}>VS</div>
             <div style={{ border: `2px solid ${BK}`, padding: 12, opacity: 0.4 }}>
               <FighterImg src={lastVote.loser.image} alt={fighterLabel(lastVote.loser)} isEvader={lastVote.loser.isEvader} style={{ width: mobile ? 100 : 140, height: mobile ? 100 : 140, imageRendering: "pixelated", filter: "grayscale(60%)" }} />
               <div style={{ textAlign: "center", fontSize: 14, fontWeight: 600, marginTop: 8 }}>{fighterLabel(lastVote.loser)}</div>
@@ -754,7 +754,7 @@ export default function DailyRiot({ mobile, ownedNFTs, wallet, setWallet, handle
     if (isDone) {
       return (
         <div style={{ textAlign: "center", marginTop: 80, border: `4px solid ${BK}`, padding: 40, background: "transparent", boxShadow: `8px 8px 0px ${BK}` }}>
-          <div style={{ fontSize: mobile ? 40 : 60, fontFamily: `"${HEADING_FONT}", serif` }}>THE RIOTS HAVE SETTLED.</div>
+          <div style={{ fontSize: mobile ? 40 : 60, fontFamily: `"${HEADING_FONT}", monospace` }}>THE RIOTS HAVE SETTLED.</div>
           <div style={{ fontSize: 24, marginTop: 20, fontWeight: "bold", textTransform: "uppercase" }}>YOU HAVE EXHAUSTED ALL VOTES FOR TODAY.</div>
           <div style={{ fontSize: 20, marginTop: 10 }}>{timeLeft}</div>
         </div>
@@ -786,13 +786,13 @@ export default function DailyRiot({ mobile, ownedNFTs, wallet, setWallet, handle
         {streak > 0 && (
           <div className="riot-streak" style={{
             background: BK, color: BG, padding: "4px 16px", fontSize: 14, fontWeight: 800,
-            letterSpacing: 2, marginBottom: 16, fontFamily: `"${HEADING_FONT}", serif`,
+            letterSpacing: 2, marginBottom: 16, fontFamily: `"${HEADING_FONT}", monospace`,
           }}>
             {streak} DAY STREAK
           </div>
         )}
 
-        <div style={{ background: BK, color: BG, padding: "8px 24px", fontSize: mobile ? 20 : 28, fontFamily: `"${HEADING_FONT}", serif`, marginBottom: 40, letterSpacing: 2 }}>
+        <div style={{ background: BK, color: BG, padding: "8px 24px", fontSize: mobile ? 20 : 28, fontFamily: `"${HEADING_FONT}", monospace`, marginBottom: 40, letterSpacing: 2 }}>
           {!mainVoted ? "MAIN DAILY RIOT (1/1)" : `STREET RIOTS (${Math.min(streetVotes + 1, 10)}/10)`}
         </div>
 
@@ -806,7 +806,7 @@ export default function DailyRiot({ mobile, ownedNFTs, wallet, setWallet, handle
           {c1 && (
             <div className={revealed ? "riot-slide-l" : ""} style={{ ...cardStyle("left"), opacity: revealed ? 1 : 0 }}>
               <FighterImg src={c1.image} alt={`#${c1.id}`} isEvader={c1.isEvader} style={{ width: "100%", aspectRatio: '1', border: `2px solid ${BK}`, imageRendering: 'pixelated' }} />
-              <div style={{ fontSize: mobile ? 28 : 36, fontFamily: `"${HEADING_FONT}", serif`, textAlign: 'center', marginTop: 16 }}>{fighterLabel(c1)}</div>
+              <div style={{ fontSize: mobile ? 28 : 36, fontFamily: `"${HEADING_FONT}", monospace`, textAlign: 'center', marginTop: 16 }}>{fighterLabel(c1)}</div>
               <div style={{ fontSize: 16, textAlign: 'center', textTransform: 'uppercase', marginBottom: 4, fontWeight: "bold" }}>CLASS: {c1.class}</div>
               <OwnerTag owner={c1Owner} />
               {c1.isEvader && <div style={{ fontSize: 14, textAlign: "center", fontWeight: 700, color: colors.error }}>ELIMINATED</div>}
@@ -822,7 +822,7 @@ export default function DailyRiot({ mobile, ownedNFTs, wallet, setWallet, handle
           )}
 
           {!mobile && (
-            <div className={revealed ? "riot-vs" : ""} style={{ fontSize: 120, fontFamily: `"${HEADING_FONT}", serif`, opacity: 0, marginTop: 140 }}>
+            <div className={revealed ? "riot-vs" : ""} style={{ fontSize: 120, fontFamily: `"${HEADING_FONT}", monospace`, opacity: 0, marginTop: 140 }}>
               VS
             </div>
           )}
@@ -830,7 +830,7 @@ export default function DailyRiot({ mobile, ownedNFTs, wallet, setWallet, handle
           {c2 && (
             <div className={revealed ? "riot-slide-r" : ""} style={{ ...cardStyle("right"), opacity: revealed ? 1 : 0 }}>
               <FighterImg src={c2.image} alt={`#${c2.id}`} isEvader={c2.isEvader} style={{ width: "100%", aspectRatio: '1', border: `2px solid ${BK}`, imageRendering: 'pixelated' }} />
-              <div style={{ fontSize: mobile ? 28 : 36, fontFamily: `"${HEADING_FONT}", serif`, textAlign: 'center', marginTop: 16 }}>{fighterLabel(c2)}</div>
+              <div style={{ fontSize: mobile ? 28 : 36, fontFamily: `"${HEADING_FONT}", monospace`, textAlign: 'center', marginTop: 16 }}>{fighterLabel(c2)}</div>
               <div style={{ fontSize: 16, textAlign: 'center', textTransform: 'uppercase', marginBottom: 4, fontWeight: "bold" }}>CLASS: {c2.class}</div>
               <OwnerTag owner={c2Owner} />
               {c2.isEvader && <div style={{ fontSize: 14, textAlign: "center", fontWeight: 700, color: colors.error }}>ELIMINATED</div>}
@@ -853,14 +853,14 @@ export default function DailyRiot({ mobile, ownedNFTs, wallet, setWallet, handle
      RENDER: LEADERBOARD
      ═══════════════════════════════════════ */
   const renderLeaderboard = () => {
-    if (lbLoading) return <div style={{ textAlign: "center", marginTop: 80, fontSize: 30, fontFamily: `"${HEADING_FONT}", serif` }}>LOADING GLOBAL LEADERBOARD...</div>;
+    if (lbLoading) return <div style={{ textAlign: "center", marginTop: 80, fontSize: 30, fontFamily: `"${HEADING_FONT}", monospace` }}>LOADING GLOBAL LEADERBOARD...</div>;
 
     const list = Object.entries(leaderboard).map(([key, v]) => ({ key, ...v })).sort((a, b) => {
       const dA = a.wins - a.losses, dB = b.wins - b.losses;
       return dB !== dA ? dB - dA : b.wins - a.wins;
     });
 
-    if (list.length === 0) return <div style={{ textAlign: "center", marginTop: 80, fontSize: 30, fontFamily: `"${HEADING_FONT}", serif` }}>NO BLOOD SHED YET.</div>;
+    if (list.length === 0) return <div style={{ textAlign: "center", marginTop: 80, fontSize: 30, fontFamily: `"${HEADING_FONT}", monospace` }}>NO BLOOD SHED YET.</div>;
 
     // ── FACTION VIEW ──
     if (factionView) {
@@ -893,7 +893,7 @@ export default function DailyRiot({ mobile, ownedNFTs, wallet, setWallet, handle
                 <div key={f.cls} className="riot-fadeup" style={{ animationDelay: `${i * 0.05}s`, border: `2px solid ${BK}`, padding: mobile ? 12 : 16 }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                      <span style={{ fontSize: mobile ? 20 : 28, fontFamily: `"${HEADING_FONT}", serif`, color: i === 0 ? "#E6C200" : BK }}>#{i + 1}</span>
+                      <span style={{ fontSize: mobile ? 20 : 28, fontFamily: `"${HEADING_FONT}", monospace`, color: i === 0 ? "#E6C200" : BK }}>#{i + 1}</span>
                       <span style={{ fontSize: mobile ? 16 : 22, fontWeight: 800 }}>{f.cls}</span>
                       <span style={{ fontSize: 13, opacity: 0.6 }}>{f.count} FIGHTERS</span>
                     </div>
@@ -943,7 +943,7 @@ export default function DailyRiot({ mobile, ownedNFTs, wallet, setWallet, handle
                 }}>
                   <div style={{
                     fontSize: mobile ? 12 : 16, fontWeight: 800, letterSpacing: 2,
-                    color: podiumColors[pi], fontFamily: `"${HEADING_FONT}", serif`,
+                    color: podiumColors[pi], fontFamily: `"${HEADING_FONT}", monospace`,
                   }}>
                     {podiumLabels[pi]}
                   </div>
@@ -958,7 +958,7 @@ export default function DailyRiot({ mobile, ownedNFTs, wallet, setWallet, handle
                   </div>
                   <div style={{
                     fontSize: mobile ? 13 : 18, fontWeight: 800,
-                    fontFamily: `"${HEADING_FONT}", serif`, textAlign: "center",
+                    fontFamily: `"${HEADING_FONT}", monospace`, textAlign: "center",
                   }}>
                     {label}
                   </div>
@@ -994,7 +994,7 @@ export default function DailyRiot({ mobile, ownedNFTs, wallet, setWallet, handle
               display: "grid",
               gridTemplateColumns: mobile ? "36px 1fr 50px 50px" : "50px 1fr 80px 80px 80px 70px",
               gap: 8, padding: "10px 12px", background: BK, color: BG, fontWeight: 800,
-              fontSize: mobile ? 12 : 16, fontFamily: `"${HEADING_FONT}", serif`, letterSpacing: 1,
+              fontSize: mobile ? 12 : 16, fontFamily: `"${HEADING_FONT}", monospace`, letterSpacing: 1,
             }}>
               <span>#</span><span>FIGHTER</span>
               {!mobile && <span>+/-</span>}
@@ -1023,7 +1023,7 @@ export default function DailyRiot({ mobile, ownedNFTs, wallet, setWallet, handle
                     transition: "background 0.2s",
                   }}
                 >
-                  <span style={{ fontSize: mobile ? 18 : 28, fontFamily: `"${HEADING_FONT}", serif`, color: rankColor, fontWeight: 800 }}>
+                  <span style={{ fontSize: mobile ? 18 : 28, fontFamily: `"${HEADING_FONT}", monospace`, color: rankColor, fontWeight: 800 }}>
                     {i + 1}
                   </span>
                   <span style={{ display: "flex", alignItems: "center", gap: 8, overflow: "hidden" }}>
@@ -1051,7 +1051,7 @@ export default function DailyRiot({ mobile, ownedNFTs, wallet, setWallet, handle
                   }}>
                     <FighterImg src={c.image} alt={label} isEvader={c.isEvader} style={{ width: mobile ? "100%" : 160, aspectRatio: "1", imageRendering: "pixelated", border: `3px solid ${BK}` }} />
                     <div style={{ flex: 1, width: "100%" }}>
-                      <div style={{ fontSize: mobile ? 24 : 32, fontFamily: `"${HEADING_FONT}", serif`, marginBottom: 8 }}>
+                      <div style={{ fontSize: mobile ? 24 : 32, fontFamily: `"${HEADING_FONT}", monospace`, marginBottom: 8 }}>
                         {c.isEvader ? `EVADER #${c.id}` : `CITIZEN #${c.id}`}
                       </div>
                       {c.class && <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 12, textTransform: "uppercase", letterSpacing: 2 }}>CLASS: {c.class}</div>}
@@ -1062,7 +1062,7 @@ export default function DailyRiot({ mobile, ownedNFTs, wallet, setWallet, handle
                           { label: "DIFF", value: diff > 0 ? `+${diff}` : String(diff) },
                         ].map(s => (
                           <div key={s.label} style={{ border: `2px solid ${BK}`, padding: "8px 12px", textAlign: "center" }}>
-                            <div style={{ fontSize: 24, fontWeight: 800, fontFamily: `"${HEADING_FONT}", serif` }}>{s.value}</div>
+                            <div style={{ fontSize: 24, fontWeight: 800, fontFamily: `"${HEADING_FONT}", monospace` }}>{s.value}</div>
                             <div style={{ fontSize: 11, letterSpacing: 2, opacity: 0.7, marginTop: 2 }}>{s.label}</div>
                           </div>
                         ))}
@@ -1092,19 +1092,19 @@ export default function DailyRiot({ mobile, ownedNFTs, wallet, setWallet, handle
      RENDER: LIVE HISTORY FEED
      ═══════════════════════════════════════ */
   const renderHistory = () => {
-    if (historyLoading) return <div style={{ textAlign: "center", marginTop: 80, fontSize: 30, fontFamily: `"${HEADING_FONT}", serif` }}>LOADING BATTLE FEED...</div>;
+    if (historyLoading) return <div style={{ textAlign: "center", marginTop: 80, fontSize: 30, fontFamily: `"${HEADING_FONT}", monospace` }}>LOADING BATTLE FEED...</div>;
 
     return (
       <div style={{ width: "100%" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20, borderBottom: `4px solid ${BK}`, paddingBottom: 12 }}>
-          <span style={{ fontSize: mobile ? 18 : 24, fontWeight: 800, letterSpacing: 2, fontFamily: `"${HEADING_FONT}", serif` }}>LIVE BATTLE FEED</span>
+          <span style={{ fontSize: mobile ? 18 : 24, fontWeight: 800, letterSpacing: 2, fontFamily: `"${HEADING_FONT}", monospace` }}>LIVE BATTLE FEED</span>
           <button onClick={fetchHistory} style={{ background: "transparent", color: BK, border: `2px solid ${BK}`, padding: "4px 12px", fontSize: 14, fontWeight: 700, cursor: "pointer" }}>
             REFRESH
           </button>
         </div>
 
         {history.length === 0 ? (
-          <div style={{ textAlign: "center", padding: 60, fontSize: 22, fontFamily: `"${HEADING_FONT}", serif`, border: `2px dashed ${BK}` }}>
+          <div style={{ textAlign: "center", padding: 60, fontSize: 22, fontFamily: `"${HEADING_FONT}", monospace`, border: `2px dashed ${BK}` }}>
             NO BATTLES RECORDED YET.
           </div>
         ) : (
@@ -1143,8 +1143,8 @@ export default function DailyRiot({ mobile, ownedNFTs, wallet, setWallet, handle
      RENDER: MY COLLECTION + PORTFOLIO
      ═══════════════════════════════════════ */
   const renderProfile = () => {
-    if (!wallet) return <div style={{ textAlign: "center", marginTop: 80, fontSize: 30, fontFamily: `"${HEADING_FONT}", serif` }}>CONNECT WALLET ON REGISTRY TAB FIRST.</div>;
-    if (!ownedNFTs || ownedNFTs.length === 0) return <div style={{ textAlign: "center", marginTop: 80, fontSize: 30, fontFamily: `"${HEADING_FONT}", serif` }}>NO CITIZENS IN COLLECTION.</div>;
+    if (!wallet) return <div style={{ textAlign: "center", marginTop: 80, fontSize: 30, fontFamily: `"${HEADING_FONT}", monospace` }}>CONNECT WALLET ON REGISTRY TAB FIRST.</div>;
+    if (!ownedNFTs || ownedNFTs.length === 0) return <div style={{ textAlign: "center", marginTop: 80, fontSize: 30, fontFamily: `"${HEADING_FONT}", monospace` }}>NO CITIZENS IN COLLECTION.</div>;
 
     let w = 0, l = 0;
     let insuredCount = 0, auditCount = 0;
@@ -1162,7 +1162,7 @@ export default function DailyRiot({ mobile, ownedNFTs, wallet, setWallet, handle
       <div style={{ width: "100%" }}>
         {/* Portfolio Header */}
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginBottom: 40, borderBottom: `4px solid ${BK}`, paddingBottom: 30 }}>
-          <div style={{ fontSize: mobile ? 36 : 60, fontFamily: `"${HEADING_FONT}", serif`, lineHeight: 1 }}>MY COLLECTION</div>
+          <div style={{ fontSize: mobile ? 36 : 60, fontFamily: `"${HEADING_FONT}", monospace`, lineHeight: 1 }}>MY COLLECTION</div>
 
           {/* Stats Grid */}
           <div style={{ display: "grid", gridTemplateColumns: mobile ? "1fr 1fr" : "1fr 1fr 1fr 1fr", gap: 16, marginTop: 24, width: "100%", maxWidth: 700 }}>
@@ -1173,7 +1173,7 @@ export default function DailyRiot({ mobile, ownedNFTs, wallet, setWallet, handle
               { label: "INSURED", value: `${insuredCount}/${ownedNFTs.length}` },
             ].map(s => (
               <div key={s.label} style={{ border: `3px solid ${BK}`, padding: mobile ? 12 : 16, textAlign: "center" }}>
-                <div style={{ fontSize: mobile ? 24 : 36, fontWeight: 800, fontFamily: `"${HEADING_FONT}", serif` }}>{s.value}</div>
+                <div style={{ fontSize: mobile ? 24 : 36, fontWeight: 800, fontFamily: `"${HEADING_FONT}", monospace` }}>{s.value}</div>
                 <div style={{ fontSize: 11, letterSpacing: 2, opacity: 0.7, marginTop: 4 }}>{s.label}</div>
               </div>
             ))}
@@ -1187,7 +1187,7 @@ export default function DailyRiot({ mobile, ownedNFTs, wallet, setWallet, handle
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 24 }}>
-          <div style={{ fontSize: mobile ? 24 : 32, fontFamily: `"${HEADING_FONT}", serif` }}>YOUR CITIZENS ({ownedNFTs.length})</div>
+          <div style={{ fontSize: mobile ? 24 : 32, fontFamily: `"${HEADING_FONT}", monospace` }}>YOUR CITIZENS ({ownedNFTs.length})</div>
           <div style={{ flex: 1, height: 4, background: BK }} />
         </div>
 
@@ -1202,7 +1202,7 @@ export default function DailyRiot({ mobile, ownedNFTs, wallet, setWallet, handle
             return (
               <div key={nft.id} className="riot-fadeup" style={{ animationDelay: `${idx * 0.05}s`, border: `4px solid ${BK}`, padding: 14, boxShadow: `6px 6px 0px ${BK}` }}>
                 <FighterImg src={nft.image || ""} alt={`#${nft.id}`} style={{ width: "100%", aspectRatio: "1", imageRendering: "pixelated", border: `2px solid ${BK}` }} />
-                <div style={{ marginTop: 12, fontSize: 28, fontFamily: `"${HEADING_FONT}", serif` }}>#{nft.id}</div>
+                <div style={{ marginTop: 12, fontSize: 28, fontFamily: `"${HEADING_FONT}", monospace` }}>#{nft.id}</div>
                 <div style={{ fontSize: 13, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1, opacity: 0.7 }}>CLASS: {nft.class}</div>
 
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 8, borderTop: `2px solid ${BK}`, paddingTop: 10 }}>
@@ -1276,7 +1276,7 @@ export default function DailyRiot({ mobile, ownedNFTs, wallet, setWallet, handle
               background: BK, color: BG, border: `2px solid ${BK}`,
               padding: "6px 14px", fontSize: mobile ? 12 : 14, fontWeight: 800,
               cursor: walletConnecting ? "wait" : "pointer",
-              fontFamily: `"${HEADING_FONT}", serif`, letterSpacing: 1,
+              fontFamily: `"${HEADING_FONT}", monospace`, letterSpacing: 1,
             }}
           >
             {walletConnecting ? "CONNECTING..." : "CONNECT WALLET"}
@@ -1309,7 +1309,7 @@ export default function DailyRiot({ mobile, ownedNFTs, wallet, setWallet, handle
           style={{
             background: loading ? BK : BG, color: loading ? BG : BK, border: `3px solid ${BK}`,
             padding: "12px 24px", fontSize: mobile ? 14 : 18, fontWeight: 800,
-            cursor: loading ? "wait" : "pointer", fontFamily: `"${HEADING_FONT}", serif`, whiteSpace: "nowrap",
+            cursor: loading ? "wait" : "pointer", fontFamily: `"${HEADING_FONT}", monospace`, whiteSpace: "nowrap",
           }}
         >
           {loading ? "CHECKING..." : "CHECK WALLET"}

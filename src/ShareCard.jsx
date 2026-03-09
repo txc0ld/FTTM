@@ -3,7 +3,7 @@ import { useTheme } from "./shared/theme";
 
 const BRAND_BG = "#dfff00";
 const BRAND_BK = "#000000";
-const HEADING_FONT = "Bajern";
+const HEADING_FONT = "DeptBody";
 const BODY_FONT = "DeptBody";
 const W = 1200;
 const H = 630;
@@ -22,7 +22,7 @@ function drawShareCard(ctx, nft, walletCount) {
 
   // Header
   ctx.fillStyle = BRAND_BK;
-  ctx.font = `bold 64px "${HEADING_FONT}", serif`;
+  ctx.font = `bold 64px "${HEADING_FONT}", monospace`;
   ctx.textAlign = "left";
   ctx.textBaseline = "top";
   ctx.fillText("DEATH + TAXES", 40, 40);
@@ -39,7 +39,7 @@ function drawShareCard(ctx, nft, walletCount) {
     ctx.lineWidth = 4;
     ctx.strokeRect(40, 180, 360, 360);
 
-    ctx.font = `bold 48px "${HEADING_FONT}", serif`;
+    ctx.font = `bold 48px "${HEADING_FONT}", monospace`;
     ctx.fillStyle = BRAND_BK;
     ctx.textAlign = "left";
     ctx.fillText(`CITIZEN #${nft.id}`, 430, 200);
@@ -144,7 +144,7 @@ export default function ShareCard({ nft, walletCount, onClose, mobile }) {
       gap: 12,
     }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <div style={{ fontSize: mobile ? 18 : 24, fontWeight: 800, fontFamily: `"${HEADING_FONT}", serif` }}>
+        <div style={{ fontSize: mobile ? 18 : 24, fontWeight: 800, fontFamily: `"${HEADING_FONT}", monospace` }}>
           SHARE CARD (1200x630)
         </div>
         <button
@@ -169,14 +169,14 @@ export default function ShareCard({ nft, walletCount, onClose, mobile }) {
         <button onClick={download} style={{
           background: BK, color: BG, border: `2px solid ${BK}`, padding: "8px 16px",
           fontSize: mobile ? 14 : 18, fontWeight: 800, cursor: "pointer",
-          fontFamily: `"${HEADING_FONT}", serif`,
+          fontFamily: `"${HEADING_FONT}", monospace`,
         }}>
           DOWNLOAD PNG
         </button>
         <button onClick={copy} style={{
           background: "transparent", color: BK, border: `2px solid ${BK}`, padding: "8px 16px",
           fontSize: mobile ? 14 : 18, fontWeight: 800, cursor: "pointer",
-          fontFamily: `"${HEADING_FONT}", serif`,
+          fontFamily: `"${HEADING_FONT}", monospace`,
         }}>
           COPY TO CLIPBOARD
         </button>

@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useTheme } from "./shared/theme";
 import { useSound } from "./shared/sound";
 
-const HEADING_FONT = "Bajern";
+const HEADING_FONT = "DeptBody";
 const BODY_FONT = "DeptBody";
 const LEADERBOARD_API = "https://dt-leaderboard-livid.vercel.app/api/leaderboard";
 const LS_KEY = "dt_boneyard_cache";
@@ -68,7 +68,7 @@ export default function KillFeed({ mobile }) {
   if (!data && loading) {
     return (
       <div style={{ padding: mobile ? 16 : 40, width: "100%", boxSizing: "border-box" }}>
-        <div style={{ fontSize: mobile ? 28 : 48, fontFamily: `"${HEADING_FONT}", serif`, marginBottom: 16 }}>
+        <div style={{ fontSize: mobile ? 28 : 48, fontFamily: `"${HEADING_FONT}", monospace`, marginBottom: 16 }}>
           KILL FEED
         </div>
         <div style={{ border: `2px solid ${fg}`, padding: 40, textAlign: "center", fontSize: mobile ? 16 : 22, fontFamily: `"${BODY_FONT}", monospace` }}>
@@ -81,13 +81,13 @@ export default function KillFeed({ mobile }) {
   if (!data && error) {
     return (
       <div style={{ padding: mobile ? 16 : 40, width: "100%", boxSizing: "border-box" }}>
-        <div style={{ fontSize: mobile ? 28 : 48, fontFamily: `"${HEADING_FONT}", serif`, marginBottom: 16 }}>
+        <div style={{ fontSize: mobile ? 28 : 48, fontFamily: `"${HEADING_FONT}", monospace`, marginBottom: 16 }}>
           KILL FEED
         </div>
         <div style={{ border: `2px dashed ${fg}`, padding: 40, textAlign: "center", fontSize: mobile ? 16 : 22 }}>
           {error}
         </div>
-        <button onClick={fetchData} style={{ marginTop: 16, background: fg, color: bg, border: "none", padding: "8px 20px", fontSize: 16, fontWeight: 500, cursor: "pointer", fontFamily: `"${HEADING_FONT}", serif` }}>
+        <button onClick={fetchData} style={{ marginTop: 16, background: fg, color: bg, border: "none", padding: "8px 20px", fontSize: 16, fontWeight: 500, cursor: "pointer", fontFamily: `"${HEADING_FONT}", monospace` }}>
           RETRY
         </button>
       </div>
@@ -149,7 +149,7 @@ export default function KillFeed({ mobile }) {
 
       {/* HEADER + STATS */}
       <div style={{ borderBottom: `4px solid ${fg}`, paddingBottom: 16 }}>
-        <div style={{ fontSize: mobile ? 28 : 48, fontFamily: `"${HEADING_FONT}", serif`, lineHeight: 1 }}>
+        <div style={{ fontSize: mobile ? 28 : 48, fontFamily: `"${HEADING_FONT}", monospace`, lineHeight: 1 }}>
           KILL FEED
         </div>
         <div style={{
@@ -160,15 +160,15 @@ export default function KillFeed({ mobile }) {
           fontFamily: `"${BODY_FONT}", monospace`,
         }}>
           <div>
-            <span style={{ fontSize: mobile ? 24 : 36, fontWeight: 900, fontFamily: `"${HEADING_FONT}", serif` }}>{data.totalKills || 0}</span>
+            <span style={{ fontSize: mobile ? 24 : 36, fontWeight: 900, fontFamily: `"${HEADING_FONT}", monospace` }}>{data.totalKills || 0}</span>
             <span style={{ fontSize: mobile ? 11 : 14, opacity: 0.6, marginLeft: 8 }}>KILLS</span>
           </div>
           <div>
-            <span style={{ fontSize: mobile ? 24 : 36, fontWeight: 900, fontFamily: `"${HEADING_FONT}", serif` }}>{data.totalAudits || 0}</span>
+            <span style={{ fontSize: mobile ? 24 : 36, fontWeight: 900, fontFamily: `"${HEADING_FONT}", monospace` }}>{data.totalAudits || 0}</span>
             <span style={{ fontSize: mobile ? 11 : 14, opacity: 0.6, marginLeft: 8 }}>AUDITS</span>
           </div>
           <div>
-            <span style={{ fontSize: mobile ? 24 : 36, fontWeight: 900, fontFamily: `"${HEADING_FONT}", serif` }}>{data.currentEpoch || 0}</span>
+            <span style={{ fontSize: mobile ? 24 : 36, fontWeight: 900, fontFamily: `"${HEADING_FONT}", monospace` }}>{data.currentEpoch || 0}</span>
             <span style={{ fontSize: mobile ? 11 : 14, opacity: 0.6, marginLeft: 8 }}>EPOCH</span>
           </div>
         </div>
@@ -188,7 +188,7 @@ export default function KillFeed({ mobile }) {
               fontSize: mobile ? 14 : 16,
               fontWeight: 500,
               cursor: "pointer",
-              fontFamily: `"${HEADING_FONT}", serif`,
+              fontFamily: `"${HEADING_FONT}", monospace`,
             }}
           >
             {t}
@@ -266,7 +266,7 @@ export default function KillFeed({ mobile }) {
                 <div style={{
                   fontSize: k.rank <= 3 ? (mobile ? 22 : 32) : (mobile ? 16 : 20),
                   fontWeight: 900,
-                  fontFamily: `"${HEADING_FONT}", serif`,
+                  fontFamily: `"${HEADING_FONT}", monospace`,
                   width: mobile ? 36 : 48,
                   textAlign: "center",
                   flexShrink: 0,
@@ -332,7 +332,7 @@ export default function KillFeed({ mobile }) {
                 <div style={{
                   fontSize: k.rank <= 3 ? (mobile ? 20 : 28) : (mobile ? 16 : 20),
                   fontWeight: 900,
-                  fontFamily: `"${HEADING_FONT}", serif`,
+                  fontFamily: `"${HEADING_FONT}", monospace`,
                   width: mobile ? 40 : 56,
                   textAlign: "right",
                   flexShrink: 0,
@@ -368,7 +368,7 @@ export default function KillFeed({ mobile }) {
                   gap: 4,
                 }}
               >
-                <div style={{ fontSize: mobile ? 18 : 24, fontWeight: 900, fontFamily: `"${HEADING_FONT}", serif` }}>
+                <div style={{ fontSize: mobile ? 18 : 24, fontWeight: 900, fontFamily: `"${HEADING_FONT}", monospace` }}>
                   #{k.tokenId}
                 </div>
                 <div style={{
@@ -421,7 +421,7 @@ export default function KillFeed({ mobile }) {
               <div style={{
                 fontSize: a.rank <= 3 ? (mobile ? 22 : 32) : (mobile ? 16 : 20),
                 fontWeight: 900,
-                fontFamily: `"${HEADING_FONT}", serif`,
+                fontFamily: `"${HEADING_FONT}", monospace`,
                 width: mobile ? 36 : 48,
                 textAlign: "center",
                 flexShrink: 0,
@@ -471,7 +471,7 @@ export default function KillFeed({ mobile }) {
               <div style={{
                 fontSize: a.rank <= 3 ? (mobile ? 20 : 28) : (mobile ? 16 : 20),
                 fontWeight: 900,
-                fontFamily: `"${HEADING_FONT}", serif`,
+                fontFamily: `"${HEADING_FONT}", monospace`,
                 width: mobile ? 40 : 56,
                 textAlign: "right",
                 flexShrink: 0,
@@ -505,7 +505,7 @@ export default function KillFeed({ mobile }) {
                   gap: 4,
                 }}
               >
-                <div style={{ fontSize: mobile ? 14 : 18, fontWeight: 900, fontFamily: `"${HEADING_FONT}", serif` }}>
+                <div style={{ fontSize: mobile ? 14 : 18, fontWeight: 900, fontFamily: `"${HEADING_FONT}", monospace` }}>
                   #{a.fromTokenId} → #{a.targetTokenId}
                 </div>
                 <div style={{

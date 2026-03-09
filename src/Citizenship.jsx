@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useTheme } from "./shared/theme";
 import { CONTRACT, fetchWalletNFTs } from "./shared/api";
-const HEADING_FONT = "Bajern";
+const HEADING_FONT = "DeptBody";
 const BODY_FONT = "DeptBody";
 
 /* ═══════════════════════════════════════════════
@@ -286,7 +286,7 @@ export default function Citizenship({ mobile }) {
 
       {/* SESSION SHARING */}
       <div style={{ border: `3px solid ${BK}`, padding: mobile ? 16 : 24, background: "transparent" }}>
-        <div style={{ fontSize: mobile ? 20 : 28, fontWeight: 800, fontFamily: `"${HEADING_FONT}", serif`, marginBottom: 16 }}>
+        <div style={{ fontSize: mobile ? 20 : 28, fontWeight: 800, fontFamily: `"${HEADING_FONT}", monospace`, marginBottom: 16 }}>
           CREW SESSION
         </div>
         <div style={{ fontSize: mobile ? 14 : 18, fontWeight: 500, marginBottom: 16 }}>
@@ -302,7 +302,7 @@ export default function Citizenship({ mobile }) {
               ...btnStyle(true),
               opacity: friends.length === 0 ? 0.4 : 1,
               cursor: friends.length === 0 ? "not-allowed" : "pointer",
-              fontFamily: `"${HEADING_FONT}", serif`,
+              fontFamily: `"${HEADING_FONT}", monospace`,
               fontSize: mobile ? 14 : 18,
               padding: mobile ? "10px 16px" : "12px 24px",
             }}
@@ -346,7 +346,7 @@ export default function Citizenship({ mobile }) {
             disabled={importing || !joinCode.trim()}
             style={{
               ...btnStyle(true),
-              fontFamily: `"${HEADING_FONT}", serif`,
+              fontFamily: `"${HEADING_FONT}", monospace`,
               fontSize: mobile ? 14 : 18,
               padding: mobile ? "10px 16px" : "12px 24px",
               cursor: importing ? "wait" : "pointer",
@@ -364,7 +364,7 @@ export default function Citizenship({ mobile }) {
 
       {/* ADD FRIEND */}
       <div style={{ borderBottom: `4px solid ${BK}`, paddingBottom: 20 }}>
-        <div style={{ fontSize: mobile ? 18 : 24, fontWeight: 800, fontFamily: `"${HEADING_FONT}", serif`, marginBottom: 12 }}>
+        <div style={{ fontSize: mobile ? 18 : 24, fontWeight: 800, fontFamily: `"${HEADING_FONT}", monospace`, marginBottom: 12 }}>
           ADD TO CREW
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
@@ -416,7 +416,7 @@ export default function Citizenship({ mobile }) {
                 fontSize: mobile ? 14 : 18,
                 fontWeight: 800,
                 cursor: fetching === "adding" ? "wait" : "pointer",
-                fontFamily: `"${HEADING_FONT}", serif`,
+                fontFamily: `"${HEADING_FONT}", monospace`,
                 whiteSpace: "nowrap",
                 transition: "all 0.15s",
               }}
@@ -453,7 +453,7 @@ export default function Citizenship({ mobile }) {
       {/* NOTIFICATION ALERTS */}
       {notifications.length > 0 && (
         <div style={{ border: `3px solid ${colors.error}`, padding: mobile ? 12 : 20, background: "rgba(139,26,26,0.08)" }}>
-          <div style={{ fontSize: mobile ? 18 : 24, fontWeight: 800, fontFamily: `"${HEADING_FONT}", serif`, color: colors.error, marginBottom: 12 }}>
+          <div style={{ fontSize: mobile ? 18 : 24, fontWeight: 800, fontFamily: `"${HEADING_FONT}", monospace`, color: colors.error, marginBottom: 12 }}>
             ELIMINATION ALERT ({notifications.length})
           </div>
           <div style={{ fontSize: mobile ? 14 : 18, marginBottom: 12, opacity: 0.8 }}>
@@ -529,7 +529,7 @@ export default function Citizenship({ mobile }) {
                       </div>
                     )}
                     <div style={{ textAlign: "center", marginTop: 6 }}>
-                      <div style={{ fontSize: mobile ? 16 : 20, fontWeight: 800, fontFamily: `"${HEADING_FONT}", serif` }}>#{c.id}</div>
+                      <div style={{ fontSize: mobile ? 16 : 20, fontWeight: 800, fontFamily: `"${HEADING_FONT}", monospace` }}>#{c.id}</div>
                       <div style={{ fontSize: 14, fontWeight: 600, textTransform: "uppercase", opacity: 0.7 }}>{c.friendLabel}</div>
                     </div>
                   </div>
@@ -572,7 +572,7 @@ export default function Citizenship({ mobile }) {
                   }}
                 >
                   <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
-                    <div style={{ fontSize: mobile ? 20 : 28, fontWeight: 800, fontFamily: `"${HEADING_FONT}", serif` }}>
+                    <div style={{ fontSize: mobile ? 20 : 28, fontWeight: 800, fontFamily: `"${HEADING_FONT}", monospace` }}>
                       {f.label}
                     </div>
                     <span style={{ fontSize: mobile ? 14 : 16, fontWeight: 600, opacity: 0.6 }}>
@@ -627,7 +627,7 @@ export default function Citizenship({ mobile }) {
                       }
                       return (
                         <div style={{ marginBottom: 16, border: `2px solid ${BK}`, padding: mobile ? 8 : 12, maxHeight: 300, overflowY: "auto" }}>
-                          <div style={{ fontSize: mobile ? 14 : 16, fontWeight: 800, marginBottom: 8, fontFamily: `"${HEADING_FONT}", serif` }}>
+                          <div style={{ fontSize: mobile ? 14 : 16, fontWeight: 800, marginBottom: 8, fontFamily: `"${HEADING_FONT}", monospace` }}>
                             AUDIT HISTORY ({snapshots.length} SNAPSHOTS)
                           </div>
                           {[...snapshots].reverse().map((snap, si) => {
@@ -677,7 +677,7 @@ export default function Citizenship({ mobile }) {
                               </div>
                             )}
                             <div style={{ textAlign: "center", marginTop: 4 }}>
-                              <div style={{ fontSize: mobile ? 14 : 18, fontWeight: 800, fontFamily: `"${HEADING_FONT}", serif` }}>#{nft.id}</div>
+                              <div style={{ fontSize: mobile ? 14 : 18, fontWeight: 800, fontFamily: `"${HEADING_FONT}", monospace` }}>#{nft.id}</div>
                               <div style={{ fontSize: mobile ? 14 : 16, fontWeight: 600, textTransform: "uppercase" }}>
                                 {nft.class !== "UNKNOWN" ? nft.class : "UNKNOWN"}
                               </div>

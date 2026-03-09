@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useTheme } from "./shared/theme";
 
 const BODY_FONT = "DeptBody";
-const HEADING_FONT = "Bajern";
+const HEADING_FONT = "DeptBody";
 
 const STATUS_COLORS = {
   DELINQUENT: "#ff0000",
@@ -145,7 +145,7 @@ export default function TaxTracker({ mobile, wallet, setWallet, ownedNFTs, handl
         <div
           style={{
             fontSize: mobile ? 28 : 42,
-            fontFamily: `"${HEADING_FONT}", serif`,
+            fontFamily: `"${HEADING_FONT}", monospace`,
             letterSpacing: -1,
             lineHeight: 1,
           }}
@@ -277,7 +277,7 @@ function SummaryCell({ label, value, color }) {
       }}
     >
       <div style={{ fontSize: 11, letterSpacing: 1, opacity: 0.6, marginBottom: 4 }}>{label}</div>
-      <div style={{ fontSize: 28, fontWeight: 700, color: color || colors.fg, fontFamily: `"${HEADING_FONT}", serif` }}>
+      <div style={{ fontSize: 28, fontWeight: 700, color: color || colors.fg, fontFamily: `"${HEADING_FONT}", monospace` }}>
         {value}
       </div>
     </div>

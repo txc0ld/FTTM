@@ -12,11 +12,12 @@ import { useTheme } from "./shared/theme";
 import { useSound } from "./shared/sound";
 import { loadImage } from "./shared/utils";
 import { fetchWalletNFTs, fetchTokenById, fetchEvaderById, CONTRACT } from "./shared/api";
-import { W, H, HEADING_FONT, BODY_FONT, loadAssets } from "./shared/canvas";
+import { W, H, HEADING_FONT as CANVAS_HEADING, BODY_FONT, loadAssets } from "./shared/canvas";
 import { TEMPLATES, RENDERERS, buildWastedGif } from "./templates";
 /* ═══════════════════════════════════════════════
    APP COMPONENT
    ═══════════════════════════════════════════════ */
+const HEADING_FONT = "DeptBody";
 
 const EMPTY_META = {
   class: "UNKNOWN",
@@ -458,10 +459,10 @@ export default function App() {
           pointerEvents: "none",
         }}>
           <div style={{ textAlign: "center" }}>
-            <div style={{ fontSize: mobile ? 60 : 120, fontFamily: `"${HEADING_FONT}", serif`, lineHeight: 1 }}>
+            <div style={{ fontSize: mobile ? 60 : 120, fontFamily: `"${HEADING_FONT}", monospace`, lineHeight: 1 }}>
               DEATH IS CERTAIN
             </div>
-            <div style={{ fontSize: mobile ? 24 : 48, fontFamily: `"${HEADING_FONT}", serif`, marginTop: 16, opacity: 0.7 }}>
+            <div style={{ fontSize: mobile ? 24 : 48, fontFamily: `"${HEADING_FONT}", monospace`, marginTop: 16, opacity: 0.7 }}>
               TAXES ARE FOREVER
             </div>
             <div style={{ fontSize: 16, marginTop: 30, letterSpacing: 4, opacity: 0.4 }}>
@@ -473,7 +474,7 @@ export default function App() {
 
       {/* GLOBAL BRANDING HEADER */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: mobile ? "12px" : "12px 24px", background: uiBg, borderBottom: `2px solid ${uiFg}` }}>
-        <div style={{ fontSize: mobile ? 28 : 40, fontFamily: `"${HEADING_FONT}", serif`, lineHeight: 0.8 }}>d/t</div>
+        <div style={{ fontSize: mobile ? 28 : 40, fontFamily: `"${HEADING_FONT}", monospace`, lineHeight: 0.8 }}>d/t</div>
         <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
           <button
             onClick={toggleTheme}
@@ -542,7 +543,7 @@ export default function App() {
             fontWeight: 600,
             letterSpacing: -1,
             lineHeight: "1",
-            fontFamily: `"${HEADING_FONT}", serif`,
+            fontFamily: `"${HEADING_FONT}", monospace`,
             cursor: "pointer",
           }}
           onClick={() => navTo("registry")}
@@ -628,7 +629,7 @@ export default function App() {
             }}
           >
             <div style={{ padding: "20px 24px", borderBottom: `2px solid ${uiFg}`, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <span style={{ fontSize: 28, fontFamily: `"${HEADING_FONT}", serif`, fontWeight: 600 }}>MENU</span>
+              <span style={{ fontSize: 28, fontFamily: `"${HEADING_FONT}", monospace`, fontWeight: 600 }}>MENU</span>
               <button onClick={() => setMenuOpen(false)} style={{ background: "transparent", border: "none", color: uiFg, fontSize: 28, cursor: "pointer", fontFamily: "monospace", lineHeight: 1 }}>X</button>
             </div>
             {[
@@ -1429,7 +1430,7 @@ export default function App() {
                 ...S.btn,
                 padding: "10px 20px 14px",
                 fontSize: mobile ? 18 : 22,
-                fontFamily: `"${HEADING_FONT}", serif`,
+                fontFamily: `"${HEADING_FONT}", monospace`,
                 lineHeight: "1",
               }}
             >
@@ -1451,7 +1452,7 @@ export default function App() {
                   ...S.btn,
                   padding: "10px 20px 14px",
                   fontSize: mobile ? 18 : 22,
-                  fontFamily: `"${HEADING_FONT}", serif`,
+                  fontFamily: `"${HEADING_FONT}", monospace`,
                   lineHeight: "1",
                 }}
               >
@@ -1475,7 +1476,7 @@ export default function App() {
                 ...S.btn,
                 padding: "10px 20px 14px",
                 fontSize: mobile ? 18 : 22,
-                fontFamily: `"${HEADING_FONT}", serif`,
+                fontFamily: `"${HEADING_FONT}", monospace`,
                 lineHeight: "1",
               }}
             >
@@ -1527,7 +1528,7 @@ export default function App() {
           <div style={{
             position: "absolute", top: 20, right: 30,
             color: "#fff", fontSize: 36, fontWeight: 800,
-            cursor: "pointer", fontFamily: `"${HEADING_FONT}", serif`,
+            cursor: "pointer", fontFamily: `"${HEADING_FONT}", monospace`,
           }}>
             X
           </div>

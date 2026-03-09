@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useTheme } from "./shared/theme";
 import { useSound } from "./shared/sound";
 import { EVADER_CONTRACT, parseEvaderMeta as _parseEvaderMeta, fetchNFTsForContract } from "./shared/api";
-const HEADING_FONT = "Bajern";
+const HEADING_FONT = "DeptBody";
 const BODY_FONT = "DeptBody";
 
 const LS_KEY = "dt_boneyard_cache";
@@ -227,7 +227,7 @@ export default function Boneyard({ mobile }) {
               fontSize: mobile ? 14 : 18,
               fontWeight: 800,
               cursor: loading ? "wait" : "pointer",
-              fontFamily: `"${HEADING_FONT}", serif`,
+              fontFamily: `"${HEADING_FONT}", monospace`,
               whiteSpace: "nowrap",
               transition: "all 0.15s",
             }}
@@ -298,7 +298,7 @@ export default function Boneyard({ mobile }) {
                 fontSize: mobile ? 14 : 16,
                 fontWeight: 700,
                 cursor: "pointer",
-                fontFamily: `"${HEADING_FONT}", serif`,
+                fontFamily: `"${HEADING_FONT}", monospace`,
               }}
             >
               {sv}
@@ -401,7 +401,7 @@ export default function Boneyard({ mobile }) {
               <div style={{
                 fontSize: mobile ? 24 : 36,
                 fontWeight: 800,
-                fontFamily: `"${HEADING_FONT}", serif`,
+                fontFamily: `"${HEADING_FONT}", monospace`,
                 lineHeight: 1,
               }}>
                 EVADER #{selectedToken.id}
@@ -581,7 +581,7 @@ export default function Boneyard({ mobile }) {
                   style={{
                     fontSize: mobile ? 18 : 24,
                     fontWeight: 800,
-                    fontFamily: `"${HEADING_FONT}", serif`,
+                    fontFamily: `"${HEADING_FONT}", monospace`,
                   }}
                 >
                   #{token.id}
@@ -644,7 +644,7 @@ export default function Boneyard({ mobile }) {
                 <div style={{
                   fontSize: mobile ? 18 : 24,
                   fontWeight: 800,
-                  fontFamily: `"${HEADING_FONT}", serif`,
+                  fontFamily: `"${HEADING_FONT}", monospace`,
                   borderBottom: `3px solid ${BK}`,
                   paddingBottom: 8,
                   marginBottom: 12,
@@ -675,7 +675,7 @@ export default function Boneyard({ mobile }) {
                         style={{ width: mobile ? 40 : 56, height: mobile ? 40 : 56, objectFit: "cover", border: `2px solid ${BK}`, flexShrink: 0 }}
                       />
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontSize: mobile ? 16 : 20, fontWeight: 800, fontFamily: `"${HEADING_FONT}", serif` }}>
+                        <div style={{ fontSize: mobile ? 16 : 20, fontWeight: 800, fontFamily: `"${HEADING_FONT}", monospace` }}>
                           EVADER #{t.id}
                         </div>
                         <div style={{ fontSize: mobile ? 14 : 16, opacity: 0.7, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
@@ -723,17 +723,17 @@ export default function Boneyard({ mobile }) {
             <div style={{ display: "grid", gridTemplateColumns: mobile ? "1fr" : "1fr 1fr 1fr", gap: 16 }}>
               <div style={{ border: `3px solid ${BK}`, padding: mobile ? 12 : 20, textAlign: "center" }}>
                 <div style={{ fontSize: mobile ? 14 : 16, letterSpacing: 3, opacity: 0.7, marginBottom: 6 }}>TOTAL ELIMINATIONS</div>
-                <div style={{ fontSize: mobile ? 32 : 48, fontWeight: 800, fontFamily: `"${HEADING_FONT}", serif` }}>{tokens.length}</div>
+                <div style={{ fontSize: mobile ? 32 : 48, fontWeight: 800, fontFamily: `"${HEADING_FONT}", monospace` }}>{tokens.length}</div>
               </div>
               <div style={{ border: `3px solid ${BK}`, padding: mobile ? 12 : 20, textAlign: "center" }}>
                 <div style={{ fontSize: mobile ? 14 : 16, letterSpacing: 3, opacity: 0.7, marginBottom: 6 }}>BUSIEST DAY</div>
-                <div style={{ fontSize: mobile ? 18 : 24, fontWeight: 800, fontFamily: `"${HEADING_FONT}", serif` }}>
+                <div style={{ fontSize: mobile ? 18 : 24, fontWeight: 800, fontFamily: `"${HEADING_FONT}", monospace` }}>
                   {busiestDay ? `${busiestDay[0]} (${busiestDay[1]})` : "?"}
                 </div>
               </div>
               <div style={{ border: `3px solid ${BK}`, padding: mobile ? 12 : 20, textAlign: "center" }}>
                 <div style={{ fontSize: mobile ? 14 : 16, letterSpacing: 3, opacity: 0.7, marginBottom: 6 }}>AVG PER DAY</div>
-                <div style={{ fontSize: mobile ? 32 : 48, fontWeight: 800, fontFamily: `"${HEADING_FONT}", serif` }}>{avgRate}</div>
+                <div style={{ fontSize: mobile ? 32 : 48, fontWeight: 800, fontFamily: `"${HEADING_FONT}", monospace` }}>{avgRate}</div>
               </div>
             </div>
 
