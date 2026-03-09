@@ -520,6 +520,16 @@ export default function Census({ mobile }) {
                       }}>
                         {h.status || "ALIVE"}
                       </span>
+                      <span style={{
+                        fontSize: mobile ? 10 : 12,
+                        fontWeight: 800,
+                        padding: "1px 6px",
+                        background: h.listed ? "#d4a017" : fg + "33",
+                        color: h.listed ? "#000" : fg,
+                        letterSpacing: 1,
+                      }}>
+                        {h.listed ? "LISTED" : "NOT LISTED"}
+                      </span>
                     </div>
                     <div style={{
                       background: fg,

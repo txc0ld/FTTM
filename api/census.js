@@ -81,6 +81,34 @@ async function fetchBribeBalances(key, maxTokenId) {
   return results;
 }
 
+async function fetchListedTokenIds(slug, osKey) {
+  if (!osKey) return new Set();
+  const listed = new Set();
+  let next = null;
+  let pages = 0;
+  try {
+    do {
+      const url = new URL(`https://api.opensea.io/api/v2/listings/collection/${slug}/all`);
+      url.searchParams.set("limit", "100");
+      if (next) url.searchParams.set("next", next);
+
+      const res = await fetch(url.toString(), {
+        headers: { "x-api-key": osKey },
+      });
+      if (!res.ok) break;
+      const data = await res.json();
+      (data.listings || []).forEach((l) => {
+        const offer = l.protocol_data?.parameters?.offer?.[0];
+        if (offer?.identifierOrCriteria) listed.add(offer.identifierOrCriteria);
+      });
+      next = data.next || null;
+      pages++;
+      if (pages > 50) break;
+    } while (next);
+  } catch {}
+  return listed;
+}
+
 async function fetchOpenSeaStats(slug, osKey) {
   if (!osKey) return null;
   try {
@@ -208,12 +236,14 @@ export default async function handler(req, res) {
   }
 
   try {
-    const [mainNfts, evaderNfts, bribeBalances, citizenStats, evaderStats] = await Promise.all([
+    const [mainNfts, evaderNfts, bribeBalances, citizenStats, evaderStats, citizenListings, evaderListings] = await Promise.all([
       scrapeContract(key, CONTRACT),
       scrapeContract(key, EVADER_CONTRACT),
       fetchBribeBalances(key, 5000),
       fetchOpenSeaStats(OS_CITIZEN_SLUG, osKey),
       fetchOpenSeaStats(OS_EVADER_SLUG, osKey),
+      fetchListedTokenIds(OS_CITIZEN_SLUG, osKey),
+      fetchListedTokenIds(OS_EVADER_SLUG, osKey),
     ]);
 
     const result = aggregate(mainNfts, evaderNfts, bribeBalances);
@@ -221,6 +251,13 @@ export default async function handler(req, res) {
     result.evaderFloor = evaderStats?.total?.floor_price ?? null;
     result.citizenOwners = citizenStats?.total?.num_owners ?? null;
     result.evaderOwners = evaderStats?.total?.num_owners ?? null;
+
+    // Tag bribe holders with listing status
+    result.bribeHolders.forEach((h) => {
+      h.listed = h.status === "ELIMINATED"
+        ? evaderListings.has(h.id)
+        : citizenListings.has(h.id);
+    });
     cached = result;
     cachedAt = Date.now();
 
