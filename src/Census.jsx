@@ -347,14 +347,14 @@ export default function Census({ mobile }) {
             <div style={{ border: `3px solid ${fg}`, padding: mobile ? 10 : 14, textAlign: "center" }}>
               <div style={{ fontSize: mobile ? 18 : 22, fontWeight: 800, letterSpacing: 3, marginBottom: 8 }}>INSURED</div>
               <div style={{ fontSize: mobile ? 20 : 28, fontFamily: `"${HEADING_FONT}", serif`, opacity: 0.8 }}>{insuredCount}</div>
-              <div style={{ fontSize: mobile ? 14 : 18, marginTop: 4, fontFamily: `"Geo", "${HEADING_FONT}", serif` }}>
+              <div style={{ fontSize: mobile ? 14 : 18, marginTop: 4, fontFamily: `"${HEADING_FONT}", serif` }}>
                 {((insuredCount / (insuredCount + uninsuredCount)) * 100).toFixed(1)}%
               </div>
             </div>
             <div style={{ border: `3px solid ${fg}`, padding: mobile ? 10 : 14, textAlign: "center" }}>
               <div style={{ fontSize: mobile ? 18 : 22, fontWeight: 800, letterSpacing: 3, marginBottom: 8 }}>UNINSURED</div>
               <div style={{ fontSize: mobile ? 20 : 28, fontFamily: `"${HEADING_FONT}", serif`, opacity: 0.8 }}>{uninsuredCount}</div>
-              <div style={{ fontSize: mobile ? 14 : 18, marginTop: 4, fontFamily: `"Geo", "${HEADING_FONT}", serif` }}>
+              <div style={{ fontSize: mobile ? 14 : 18, marginTop: 4, fontFamily: `"${HEADING_FONT}", serif` }}>
                 {((uninsuredCount / (insuredCount + uninsuredCount)) * 100).toFixed(1)}%
               </div>
             </div>
@@ -393,14 +393,14 @@ export default function Census({ mobile }) {
             <div style={{ border: `3px solid ${fg}`, padding: mobile ? 10 : 14, textAlign: "center" }}>
               <div style={{ fontSize: mobile ? 18 : 22, fontWeight: 800, letterSpacing: 3, marginBottom: 8 }}>BRIBED</div>
               <div style={{ fontSize: mobile ? 20 : 28, fontFamily: `"${HEADING_FONT}", serif`, opacity: 0.8 }}>{bribedCount}</div>
-              <div style={{ fontSize: mobile ? 14 : 18, marginTop: 4, fontFamily: `"Geo", "${HEADING_FONT}", serif` }}>
+              <div style={{ fontSize: mobile ? 14 : 18, marginTop: 4, fontFamily: `"${HEADING_FONT}", serif` }}>
                 {((bribedCount / (bribedCount + unbribedCount)) * 100).toFixed(1)}% OF CITIZENS
               </div>
             </div>
             <div style={{ border: `3px solid ${fg}`, padding: mobile ? 10 : 14, textAlign: "center" }}>
               <div style={{ fontSize: mobile ? 18 : 22, fontWeight: 800, letterSpacing: 3, marginBottom: 8 }}>UNBRIBED</div>
               <div style={{ fontSize: mobile ? 20 : 28, fontFamily: `"${HEADING_FONT}", serif`, opacity: 0.8 }}>{unbribedCount}</div>
-              <div style={{ fontSize: mobile ? 14 : 18, marginTop: 4, fontFamily: `"Geo", "${HEADING_FONT}", serif` }}>
+              <div style={{ fontSize: mobile ? 14 : 18, marginTop: 4, fontFamily: `"${HEADING_FONT}", serif` }}>
                 {((unbribedCount / (bribedCount + unbribedCount)) * 100).toFixed(1)}% OF CITIZENS
               </div>
             </div>
@@ -409,7 +409,7 @@ export default function Census({ mobile }) {
               <div style={{ fontSize: mobile ? 20 : 28, fontFamily: `"${HEADING_FONT}", serif`, opacity: 0.8 }}>
                 {bribedCount - bribedElimCount}
               </div>
-              <div style={{ fontSize: mobile ? 14 : 18, marginTop: 4, fontFamily: `"Geo", "${HEADING_FONT}", serif` }}>
+              <div style={{ fontSize: mobile ? 14 : 18, marginTop: 4, fontFamily: `"${HEADING_FONT}", serif` }}>
                 STILL ALIVE WITH BRIBES
               </div>
             </div>
@@ -428,7 +428,7 @@ export default function Census({ mobile }) {
               <div style={{ fontSize: mobile ? 14 : 18, marginTop: 8, opacity: 0.8 }}>
                 {bribedElimCount} BRIBED CITIZENS ELIMINATED ANYWAY
               </div>
-              <div style={{ fontSize: mobile ? 12 : 16, marginTop: 4, fontFamily: `"Geo", "${HEADING_FONT}", serif`, opacity: 0.6 }}>
+              <div style={{ fontSize: mobile ? 12 : 16, marginTop: 4, fontFamily: `"${HEADING_FONT}", serif`, opacity: 0.6 }}>
                 {((bribedElimCount / bribedCount) * 100).toFixed(1)}% BRIBE FAILURE RATE
               </div>
             </div>

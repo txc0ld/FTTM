@@ -120,7 +120,7 @@ export default function IrsWatchdog({ mobile, ownedNFTs, selectNFT, setView, wal
               fontSize: mobile ? 14 : 18,
               fontWeight: 800,
               cursor: loading ? "wait" : "pointer",
-              fontFamily: '"Geo", "Bajern", serif',
+              fontFamily: '"Bajern", serif',
               whiteSpace: "nowrap",
               transition: "all 0.15s",
             }}
@@ -158,7 +158,7 @@ export default function IrsWatchdog({ mobile, ownedNFTs, selectNFT, setView, wal
       </div>
       
       <div style={{ display: "flex", flexDirection: "column", gap: 12, border: `2px solid ${BK}`, padding: mobile ? 16 : 24, background: "transparent" }}>
-        <div style={{ fontSize: 24, fontWeight: 800, fontFamily: '"Geo", "Bajern", serif' }}>
+        <div style={{ fontSize: 24, fontWeight: 800, fontFamily: '"Bajern", serif' }}>
           GLOBAL ON-CHAIN AUDIT SWEEP
         </div>
         <div style={{ fontSize: 16, fontWeight: 500 }}>
@@ -175,7 +175,7 @@ export default function IrsWatchdog({ mobile, ownedNFTs, selectNFT, setView, wal
             fontSize: mobile ? 18 : 24,
             fontWeight: 800,
             cursor: isScraping ? "wait" : "pointer",
-            fontFamily: '"Geo", "Bajern", serif',
+            fontFamily: '"Bajern", serif',
             alignSelf: "flex-start",
             transition: "all 0.15s"
           }}
@@ -186,7 +186,7 @@ export default function IrsWatchdog({ mobile, ownedNFTs, selectNFT, setView, wal
 
       {globalAudited.length > 0 && (
         <div style={{ marginTop: 24 }}>
-          <div style={{ fontSize: 28, fontWeight: 800, fontFamily: '"Geo", "Bajern", serif', borderBottom: `2px solid ${BK}`, paddingBottom: 12, marginBottom: 24 }}>
+          <div style={{ fontSize: 28, fontWeight: 800, fontFamily: '"Bajern", serif', borderBottom: `2px solid ${BK}`, paddingBottom: 12, marginBottom: 24 }}>
              {globalAudited.length} GLOBAL AUDITS IDENTIFIED:
           </div>
           <div style={{ display: "grid", gridTemplateColumns: mobile ? "repeat(auto-fill, minmax(140px, 1fr))" : "repeat(auto-fill, minmax(180px, 1fr))", gap: mobile ? 12 : 20 }}>
@@ -200,7 +200,7 @@ export default function IrsWatchdog({ mobile, ownedNFTs, selectNFT, setView, wal
                   </div>
                 )}
                 <div style={{ textAlign: "center", display: "flex", flexDirection: "column", gap: 4, marginTop: 8 }}>
-                  <div style={{ fontSize: 24, fontWeight: 800, fontFamily: '"Geo", "Bajern", serif' }}>#{gnft.id}</div>
+                  <div style={{ fontSize: 24, fontWeight: 800, fontFamily: '"Bajern", serif' }}>#{gnft.id}</div>
                   <div style={{ fontSize: 14, fontWeight: 600, textTransform: "uppercase" }}>{gnft.class}</div>
                   <div style={{ fontSize: 15, background: BK, color: BG, padding: "4px 0", fontWeight: 700 }}>{gnft.status}</div>
                 </div>
@@ -313,7 +313,7 @@ export default function IrsWatchdog({ mobile, ownedNFTs, selectNFT, setView, wal
                   </div>
                 )}
                 <div style={{ textAlign: "center", display: "flex", flexDirection: "column", gap: 4 }}>
-                  <div style={{ fontSize: mobile ? 18 : 24, fontWeight: 800, fontFamily: '"Geo", "Bajern", serif' }}>
+                  <div style={{ fontSize: mobile ? 18 : 24, fontWeight: 800, fontFamily: '"Bajern", serif' }}>
                     #{nft.id}
                   </div>
                   <div style={{ fontSize: mobile ? 14 : 16, fontWeight: 600, textTransform: "uppercase" }}>
