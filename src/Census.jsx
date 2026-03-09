@@ -101,7 +101,6 @@ export default function Census({ mobile }) {
     try {
       const classCounts = {};
       const classInsured = { yes: 0, no: 0 };
-      const classBribes = { yes: 0, no: 0 };
       let pageKey = null;
       let pages = 0;
       let total = 0;
@@ -123,9 +122,6 @@ export default function Census({ mobile }) {
           const ins = (attrs.insured || attrs.insurance || "").toLowerCase();
           if (ins === "yes") classInsured.yes++;
           else classInsured.no++;
-          const bribe = (attrs.bribe || attrs.bribes || "").toLowerCase();
-          if (bribe && bribe !== "none" && bribe !== "no") classBribes.yes++;
-          else classBribes.no++;
           total++;
         });
 
@@ -136,7 +132,6 @@ export default function Census({ mobile }) {
       } while (pageKey);
 
       const elimByClass = {};
-      let bribedElim = 0;
       let evaderKey = null;
       let evaderPages = 0;
       do {
@@ -158,8 +153,6 @@ export default function Census({ mobile }) {
           });
           const cls = (attrs.class || attrs.type || "UNKNOWN").toUpperCase();
           elimByClass[cls] = (elimByClass[cls] || 0) + 1;
-          const bribe = (attrs.bribe || attrs.bribes || "").toLowerCase();
-          if (bribe && bribe !== "none" && bribe !== "no") bribedElim++;
         });
 
         evaderPages++;
@@ -168,11 +161,12 @@ export default function Census({ mobile }) {
         if (evaderKey) await new Promise((r) => setTimeout(r, 200));
       } while (evaderKey);
 
+      // Bribe data requires on-chain game contract query (server-side only)
       applyCensusResult({
         classes: classCounts, classEliminated: elimByClass,
         insuredCount: classInsured.yes, uninsuredCount: classInsured.no,
-        bribedCount: classBribes.yes, unbribedCount: classBribes.no,
-        bribedElimCount: bribedElim,
+        bribedCount: 0, unbribedCount: 0,
+        bribedElimCount: 0,
       });
       setProgress("");
     } catch (e) {
