@@ -3,7 +3,7 @@ import { useTheme } from "./shared/theme";
 
 const BRAND_BG = "#dfff00";
 const BRAND_BK = "#000000";
-const HEADING_FONT = "DeptBody";
+const HEADING_FONT = "VT323";
 const BODY_FONT = "DeptBody";
 const W = 1200;
 const H = 630;

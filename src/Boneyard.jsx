@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useTheme } from "./shared/theme";
 import { useSound } from "./shared/sound";
 import { EVADER_CONTRACT, parseEvaderMeta as _parseEvaderMeta, fetchNFTsForContract } from "./shared/api";
-const HEADING_FONT = "DeptBody";
+const HEADING_FONT = "VT323";
 const BODY_FONT = "DeptBody";
 
 const LS_KEY = "dt_boneyard_cache";

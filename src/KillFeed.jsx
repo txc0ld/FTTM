@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useTheme } from "./shared/theme";
 import { useSound } from "./shared/sound";
 
-const HEADING_FONT = "DeptBody";
+const HEADING_FONT = "VT323";
 const BODY_FONT = "DeptBody";
 const LEADERBOARD_API = "https://dt-leaderboard-livid.vercel.app/api/leaderboard";
 const LS_KEY = "dt_boneyard_cache";

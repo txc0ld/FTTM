@@ -10,7 +10,7 @@ import {
 } from "./shared/api";
 import { sR } from "./shared/utils";
 
-const HEADING_FONT = "DeptBody";
+const HEADING_FONT = "VT323";
 const BODY_FONT = "DeptBody";
 
 /* ═══════════════════════════════════════

@@ -3,7 +3,7 @@ import { useTheme } from "./shared/theme";
 import { useSound } from "./shared/sound";
 import { CONTRACT, EVADER_CONTRACT, fetchNFTsForContract } from "./shared/api";
 
-const HEADING_FONT = "DeptBody";
+const HEADING_FONT = "VT323";
 const BODY_FONT = "DeptBody";
 
 const CENSUS_LS = "dt_census_cache";
@@ -304,8 +304,8 @@ export default function Census({ mobile }) {
           { label: "EVADER FLOOR", value: evaderFloor != null ? `${evaderFloor} ETH` : "?" },
         ].map((s) => (
           <div key={s.label} style={{ border: `3px solid ${fg}`, padding: mobile ? 10 : 14, textAlign: "center" }}>
-            <div style={{ fontSize: mobile ? 18 : 22, fontWeight: 800, letterSpacing: 3, marginBottom: 8 }}>{s.label}</div>
-            <div style={{ fontSize: mobile ? 20 : 28, fontFamily: `"${HEADING_FONT}", monospace`, opacity: 0.8 }}>{s.value}</div>
+            <div style={{ fontSize: mobile ? 18 : 22, fontWeight: 800, letterSpacing: 3, marginBottom: 8, fontFamily: `"${HEADING_FONT}", monospace` }}>{s.label}</div>
+            <div style={{ fontSize: mobile ? 20 : 28, fontFamily: `"${BODY_FONT}", monospace`, opacity: 0.8 }}>{s.value}</div>
           </div>
         ))}
       </div>
@@ -345,16 +345,16 @@ export default function Census({ mobile }) {
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
           <div style={{ display: "grid", gridTemplateColumns: mobile ? "1fr" : "1fr 1fr", gap: 16 }}>
             <div style={{ border: `3px solid ${fg}`, padding: mobile ? 10 : 14, textAlign: "center" }}>
-              <div style={{ fontSize: mobile ? 18 : 22, fontWeight: 800, letterSpacing: 3, marginBottom: 8 }}>INSURED</div>
-              <div style={{ fontSize: mobile ? 20 : 28, fontFamily: `"${HEADING_FONT}", monospace`, opacity: 0.8 }}>{insuredCount}</div>
-              <div style={{ fontSize: mobile ? 14 : 18, marginTop: 4, fontFamily: `"${HEADING_FONT}", monospace` }}>
+              <div style={{ fontSize: mobile ? 18 : 22, fontWeight: 800, letterSpacing: 3, marginBottom: 8, fontFamily: `"${HEADING_FONT}", monospace` }}>INSURED</div>
+              <div style={{ fontSize: mobile ? 20 : 28, fontFamily: `"${BODY_FONT}", monospace`, opacity: 0.8 }}>{insuredCount}</div>
+              <div style={{ fontSize: mobile ? 14 : 18, marginTop: 4, fontFamily: `"${BODY_FONT}", monospace` }}>
                 {((insuredCount / (insuredCount + uninsuredCount)) * 100).toFixed(1)}%
               </div>
             </div>
             <div style={{ border: `3px solid ${fg}`, padding: mobile ? 10 : 14, textAlign: "center" }}>
-              <div style={{ fontSize: mobile ? 18 : 22, fontWeight: 800, letterSpacing: 3, marginBottom: 8 }}>UNINSURED</div>
-              <div style={{ fontSize: mobile ? 20 : 28, fontFamily: `"${HEADING_FONT}", monospace`, opacity: 0.8 }}>{uninsuredCount}</div>
-              <div style={{ fontSize: mobile ? 14 : 18, marginTop: 4, fontFamily: `"${HEADING_FONT}", monospace` }}>
+              <div style={{ fontSize: mobile ? 18 : 22, fontWeight: 800, letterSpacing: 3, marginBottom: 8, fontFamily: `"${HEADING_FONT}", monospace` }}>UNINSURED</div>
+              <div style={{ fontSize: mobile ? 20 : 28, fontFamily: `"${BODY_FONT}", monospace`, opacity: 0.8 }}>{uninsuredCount}</div>
+              <div style={{ fontSize: mobile ? 14 : 18, marginTop: 4, fontFamily: `"${BODY_FONT}", monospace` }}>
                 {((uninsuredCount / (insuredCount + uninsuredCount)) * 100).toFixed(1)}%
               </div>
             </div>
@@ -391,25 +391,25 @@ export default function Census({ mobile }) {
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
           <div style={{ display: "grid", gridTemplateColumns: mobile ? "1fr" : "1fr 1fr 1fr", gap: 16 }}>
             <div style={{ border: `3px solid ${fg}`, padding: mobile ? 10 : 14, textAlign: "center" }}>
-              <div style={{ fontSize: mobile ? 18 : 22, fontWeight: 800, letterSpacing: 3, marginBottom: 8 }}>BRIBED</div>
-              <div style={{ fontSize: mobile ? 20 : 28, fontFamily: `"${HEADING_FONT}", monospace`, opacity: 0.8 }}>{bribedCount}</div>
-              <div style={{ fontSize: mobile ? 14 : 18, marginTop: 4, fontFamily: `"${HEADING_FONT}", monospace` }}>
+              <div style={{ fontSize: mobile ? 18 : 22, fontWeight: 800, letterSpacing: 3, marginBottom: 8, fontFamily: `"${HEADING_FONT}", monospace` }}>BRIBED</div>
+              <div style={{ fontSize: mobile ? 20 : 28, fontFamily: `"${BODY_FONT}", monospace`, opacity: 0.8 }}>{bribedCount}</div>
+              <div style={{ fontSize: mobile ? 14 : 18, marginTop: 4, fontFamily: `"${BODY_FONT}", monospace` }}>
                 {((bribedCount / (bribedCount + unbribedCount)) * 100).toFixed(1)}% OF CITIZENS
               </div>
             </div>
             <div style={{ border: `3px solid ${fg}`, padding: mobile ? 10 : 14, textAlign: "center" }}>
-              <div style={{ fontSize: mobile ? 18 : 22, fontWeight: 800, letterSpacing: 3, marginBottom: 8 }}>UNBRIBED</div>
-              <div style={{ fontSize: mobile ? 20 : 28, fontFamily: `"${HEADING_FONT}", monospace`, opacity: 0.8 }}>{unbribedCount}</div>
-              <div style={{ fontSize: mobile ? 14 : 18, marginTop: 4, fontFamily: `"${HEADING_FONT}", monospace` }}>
+              <div style={{ fontSize: mobile ? 18 : 22, fontWeight: 800, letterSpacing: 3, marginBottom: 8, fontFamily: `"${HEADING_FONT}", monospace` }}>UNBRIBED</div>
+              <div style={{ fontSize: mobile ? 20 : 28, fontFamily: `"${BODY_FONT}", monospace`, opacity: 0.8 }}>{unbribedCount}</div>
+              <div style={{ fontSize: mobile ? 14 : 18, marginTop: 4, fontFamily: `"${BODY_FONT}", monospace` }}>
                 {((unbribedCount / (bribedCount + unbribedCount)) * 100).toFixed(1)}% OF CITIZENS
               </div>
             </div>
             <div style={{ border: `3px solid ${fg}`, padding: mobile ? 10 : 14, textAlign: "center" }}>
-              <div style={{ fontSize: mobile ? 18 : 22, fontWeight: 800, letterSpacing: 3, marginBottom: 8 }}>REMAINING BRIBED</div>
-              <div style={{ fontSize: mobile ? 20 : 28, fontFamily: `"${HEADING_FONT}", monospace`, opacity: 0.8 }}>
+              <div style={{ fontSize: mobile ? 18 : 22, fontWeight: 800, letterSpacing: 3, marginBottom: 8, fontFamily: `"${HEADING_FONT}", monospace` }}>REMAINING BRIBED</div>
+              <div style={{ fontSize: mobile ? 20 : 28, fontFamily: `"${BODY_FONT}", monospace`, opacity: 0.8 }}>
                 {bribedCount - bribedElimCount}
               </div>
-              <div style={{ fontSize: mobile ? 14 : 18, marginTop: 4, fontFamily: `"${HEADING_FONT}", monospace` }}>
+              <div style={{ fontSize: mobile ? 14 : 18, marginTop: 4, fontFamily: `"${BODY_FONT}", monospace` }}>
                 STILL ALIVE WITH BRIBES
               </div>
             </div>
@@ -428,7 +428,7 @@ export default function Census({ mobile }) {
               <div style={{ fontSize: mobile ? 14 : 18, marginTop: 8, opacity: 0.8 }}>
                 {bribedElimCount} BRIBED CITIZENS ELIMINATED ANYWAY
               </div>
-              <div style={{ fontSize: mobile ? 12 : 16, marginTop: 4, fontFamily: `"${HEADING_FONT}", monospace`, opacity: 0.6 }}>
+              <div style={{ fontSize: mobile ? 12 : 16, marginTop: 4, fontFamily: `"${BODY_FONT}", monospace`, opacity: 0.6 }}>
                 {((bribedElimCount / bribedCount) * 100).toFixed(1)}% BRIBE FAILURE RATE
               </div>
             </div>

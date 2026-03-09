@@ -17,7 +17,7 @@ import { TEMPLATES, RENDERERS, buildWastedGif } from "./templates";
 /* ═══════════════════════════════════════════════
    APP COMPONENT
    ═══════════════════════════════════════════════ */
-const HEADING_FONT = "DeptBody";
+const HEADING_FONT = "VT323";
 
 const EMPTY_META = {
   class: "UNKNOWN",
