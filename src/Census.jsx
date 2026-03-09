@@ -24,7 +24,6 @@ function saveCensusCache(data) {
 export default function Census({ mobile }) {
   const { colors } = useTheme();
   const { playClick, playStaticBuzz } = useSound();
-  const [tab, setTab] = useState("POPULATION");
   const [contractMeta, setContractMeta] = useState(null);
   const [classes, setClasses] = useState(null);
   const [classEliminated, setClassEliminated] = useState({});
@@ -63,7 +62,7 @@ export default function Census({ mobile }) {
   useEffect(() => {
     if (!classes || !chartRef.current) return;
     drawChart();
-  }, [classes, classEliminated, tab, colors]);
+  }, [classes, classEliminated, colors]);
 
   const fetchContractMetaData = async () => {
     try {
@@ -236,6 +235,23 @@ export default function Census({ mobile }) {
   const totalSupply = contractMeta?.totalSupply || contractMeta?.openSeaMetadata?.totalSupply || "?";
   const floorPrice = contractMeta?.openSeaMetadata?.floorPrice || "?";
 
+  const hasInsurance = insuredCount > 0 || uninsuredCount > 0;
+  const hasBribes = bribedCount > 0 || unbribedCount > 0;
+
+  const sectionHeader = (text) => (
+    <div style={{
+      borderBottom: `3px solid ${fg}`,
+      paddingBottom: 8,
+      marginTop: 16,
+      fontSize: mobile ? 20 : 28,
+      fontWeight: 800,
+      fontFamily: `"${HEADING_FONT}", serif`,
+      letterSpacing: 3,
+    }}>
+      {text}
+    </div>
+  );
+
   return (
     <div style={{ padding: mobile ? 16 : 40, width: "100%", display: "flex", flexDirection: "column", gap: 24 }}>
       {/* HEADER */}
@@ -248,412 +264,274 @@ export default function Census({ mobile }) {
         </div>
       </div>
 
-      {/* TAB NAV */}
-      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-        {["POPULATION", "CLASS", "INSURANCE", "BRIBES"].map((t) => (
-          <button
-            key={t}
-            onClick={() => { setTab(t); playClick(); }}
-            style={{
-              background: tab === t ? fg : "transparent",
-              color: tab === t ? bg : fg,
-              border: `2px solid ${fg}`,
-              padding: "6px 16px",
-              fontSize: mobile ? 14 : 16,
-              fontWeight: 700,
-              cursor: "pointer",
-              fontFamily: `"${HEADING_FONT}", serif`,
-            }}
-          >
-            {t}
-          </button>
+      {/* SCAN CONTROLS */}
+      <div style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
+        <button
+          onClick={() => { scrapeClasses(); playStaticBuzz(); }}
+          disabled={loading}
+          style={{
+            background: loading ? fg : bg,
+            color: loading ? bg : fg,
+            border: `3px solid ${fg}`,
+            padding: "10px 24px",
+            fontSize: mobile ? 16 : 20,
+            fontWeight: 800,
+            cursor: loading ? "wait" : "pointer",
+            fontFamily: `"${HEADING_FONT}", serif`,
+          }}
+        >
+          {loading ? "SCRAPING..." : classes ? "RESCAN CENSUS" : "RUN CENSUS"}
+        </button>
+        {loading && progress && (
+          <span style={{ background: fg, color: bg, padding: "6px 14px", fontWeight: 700, fontSize: mobile ? 14 : 16 }}>
+            {progress}
+          </span>
+        )}
+        {error && <span style={{ color: colors.error, fontWeight: 700 }}>{error}</span>}
+      </div>
+
+      {/* ─── POPULATION ─── */}
+      {sectionHeader("POPULATION")}
+      <div style={{ display: "grid", gridTemplateColumns: mobile ? "1fr" : "1fr 1fr", gap: 16 }}>
+        {[
+          { label: "TOTAL SUPPLY", value: totalSupply },
+          { label: "FLOOR PRICE", value: floorPrice !== "?" ? `${floorPrice} ETH` : "?" },
+          { label: "ELIMINATED", value: elimTotal || "?" },
+          { label: "SURVIVAL RATE", value: totalSupply !== "?" && elimTotal ? `${(((parseInt(totalSupply) - elimTotal) / parseInt(totalSupply)) * 100).toFixed(1)}%` : "?" },
+        ].map((s) => (
+          <div key={s.label} style={{ border: `3px solid ${fg}`, padding: mobile ? 16 : 24, textAlign: "center" }}>
+            <div style={{ fontSize: mobile ? 14 : 16, letterSpacing: 3, marginBottom: 8, opacity: 0.7 }}>{s.label}</div>
+            <div style={{ fontSize: mobile ? 28 : 48, fontWeight: 800, fontFamily: `"${HEADING_FONT}", serif` }}>{s.value}</div>
+          </div>
         ))}
       </div>
 
-      {/* POPULATION TAB */}
-      {tab === "POPULATION" && (
-        <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-          <div style={{ display: "grid", gridTemplateColumns: mobile ? "1fr" : "1fr 1fr", gap: 16 }}>
-            {[
-              { label: "TOTAL SUPPLY", value: totalSupply },
-              { label: "FLOOR PRICE", value: floorPrice !== "?" ? `${floorPrice} ETH` : "?" },
-              { label: "ELIMINATED", value: elimTotal || "?" },
-              { label: "SURVIVAL RATE", value: totalSupply !== "?" && elimTotal ? `${(((parseInt(totalSupply) - elimTotal) / parseInt(totalSupply)) * 100).toFixed(1)}%` : "?" },
-            ].map((s) => (
-              <div key={s.label} style={{ border: `3px solid ${fg}`, padding: mobile ? 16 : 24, textAlign: "center" }}>
-                <div style={{ fontSize: mobile ? 14 : 16, letterSpacing: 3, marginBottom: 8, opacity: 0.7 }}>{s.label}</div>
-                <div style={{ fontSize: mobile ? 28 : 48, fontWeight: 800, fontFamily: `"${HEADING_FONT}", serif` }}>{s.value}</div>
-              </div>
-            ))}
+      {/* ─── CLASS BREAKDOWN ─── */}
+      {sectionHeader("CLASS BREAKDOWN")}
+      {!classes ? (
+        <div style={{ opacity: 0.5, fontWeight: 700, fontSize: mobile ? 14 : 18 }}>
+          RUN CENSUS TO POPULATE CLASS DATA.
+        </div>
+      ) : (
+        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          <div style={{ display: "flex", gap: 12, flexWrap: "wrap", fontSize: mobile ? 14 : 16, fontWeight: 700 }}>
+            <span style={{ background: fg, color: bg, padding: "4px 10px" }}>
+              {Object.keys(classes).length} CLASSES
+            </span>
+            <span style={{ border: `2px solid ${fg}`, padding: "4px 10px" }}>
+              {Object.values(classes).reduce((s, v) => s + v, 0)} TOTAL CITIZENS
+            </span>
+            <span style={{ background: colors.error, color: "#fff", padding: "4px 10px" }}>
+              {elimTotal} ELIMINATED (RED OVERLAY)
+            </span>
+          </div>
+          <div style={{ border: `2px solid ${fg}`, overflow: "hidden" }}>
+            <canvas ref={chartRef} style={{ width: "100%", display: "block" }} />
           </div>
         </div>
       )}
 
-      {/* CLASS TAB */}
-      {tab === "CLASS" && (
-        <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-          {!classes ? (
-            <div style={{ textAlign: "center", padding: 40 }}>
-              <button
-                onClick={() => { scrapeClasses(); playStaticBuzz(); }}
-                disabled={loading}
-                style={{
-                  background: loading ? fg : bg,
-                  color: loading ? bg : fg,
-                  border: `3px solid ${fg}`,
-                  padding: "16px 32px",
-                  fontSize: mobile ? 18 : 24,
-                  fontWeight: 800,
-                  cursor: loading ? "wait" : "pointer",
-                  fontFamily: `"${HEADING_FONT}", serif`,
-                }}
-              >
-                {loading ? "SCRAPING..." : "RUN CLASS CENSUS"}
-              </button>
-              {progress && (
-                <div style={{ marginTop: 16, background: fg, color: bg, padding: "8px 16px", fontWeight: 700, fontSize: mobile ? 14 : 18 }}>
-                  {progress}
-                </div>
-              )}
-              {error && <div style={{ marginTop: 8, color: colors.error, fontWeight: 700 }}>{error}</div>}
+      {/* ─── INSURANCE REPORT ─── */}
+      {sectionHeader("INSURANCE REPORT")}
+      {!hasInsurance ? (
+        <div style={{ opacity: 0.5, fontWeight: 700, fontSize: mobile ? 14 : 18 }}>
+          RUN CENSUS TO POPULATE INSURANCE DATA.
+        </div>
+      ) : (
+        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          <div style={{ display: "grid", gridTemplateColumns: mobile ? "1fr" : "1fr 1fr", gap: 16 }}>
+            <div style={{ border: `3px solid ${fg}`, padding: mobile ? 16 : 24, textAlign: "center" }}>
+              <div style={{ fontSize: mobile ? 14 : 16, letterSpacing: 3, marginBottom: 8, opacity: 0.7 }}>INSURED</div>
+              <div style={{ fontSize: mobile ? 36 : 56, fontWeight: 800, fontFamily: `"${HEADING_FONT}", serif` }}>{insuredCount}</div>
+              <div style={{ fontSize: mobile ? 14 : 18, marginTop: 4 }}>
+                {((insuredCount / (insuredCount + uninsuredCount)) * 100).toFixed(1)}%
+              </div>
             </div>
-          ) : (
-            <>
-              <div style={{ display: "flex", gap: 12, flexWrap: "wrap", fontSize: mobile ? 14 : 16, fontWeight: 700 }}>
-                <span style={{ background: fg, color: bg, padding: "4px 10px" }}>
-                  {Object.keys(classes).length} CLASSES
-                </span>
-                <span style={{ border: `2px solid ${fg}`, padding: "4px 10px" }}>
-                  {Object.values(classes).reduce((s, v) => s + v, 0)} TOTAL CITIZENS
-                </span>
-                <span style={{ background: colors.error, color: "#fff", padding: "4px 10px" }}>
-                  {elimTotal} ELIMINATED (RED OVERLAY)
-                </span>
-                <button
-                  onClick={() => { scrapeClasses(); playStaticBuzz(); }}
-                  disabled={loading}
-                  style={{
-                    background: "transparent",
-                    color: fg,
-                    border: `2px solid ${fg}`,
-                    padding: "4px 12px",
-                    fontSize: mobile ? 14 : 16,
-                    fontWeight: 700,
-                    cursor: "pointer",
-                    fontFamily: "inherit",
-                  }}
-                >
-                  {loading ? "SCRAPING..." : "RESCAN"}
-                </button>
+            <div style={{ border: `3px solid ${fg}`, padding: mobile ? 16 : 24, textAlign: "center" }}>
+              <div style={{ fontSize: mobile ? 14 : 16, letterSpacing: 3, marginBottom: 8, opacity: 0.7 }}>UNINSURED</div>
+              <div style={{ fontSize: mobile ? 36 : 56, fontWeight: 800, fontFamily: `"${HEADING_FONT}", serif` }}>{uninsuredCount}</div>
+              <div style={{ fontSize: mobile ? 14 : 18, marginTop: 4 }}>
+                {((uninsuredCount / (insuredCount + uninsuredCount)) * 100).toFixed(1)}%
               </div>
-              {loading && progress && (
-                <div style={{ background: fg, color: bg, padding: "8px 16px", fontWeight: 700, fontSize: mobile ? 14 : 18 }}>
-                  {progress}
-                </div>
-              )}
-              <div style={{ border: `2px solid ${fg}`, overflow: "hidden" }}>
-                <canvas ref={chartRef} style={{ width: "100%", display: "block" }} />
+            </div>
+          </div>
+          {elimTotal > 0 && (
+            <div style={{
+              border: `3px solid ${colors.error}`,
+              padding: mobile ? 16 : 24,
+              textAlign: "center",
+              background: "rgba(139,26,26,0.08)",
+            }}>
+              <div style={{ fontSize: mobile ? 20 : 32, fontWeight: 800, fontFamily: `"${HEADING_FONT}", serif`, color: colors.error }}>
+                IT DIDN'T SAVE THEM
               </div>
-            </>
+              <div style={{ fontSize: mobile ? 14 : 18, marginTop: 8, opacity: 0.8 }}>
+                {elimTotal} CITIZENS ELIMINATED REGARDLESS OF INSURANCE STATUS
+              </div>
+            </div>
           )}
         </div>
       )}
 
-      {/* INSURANCE TAB */}
-      {tab === "INSURANCE" && (
-        <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-          {insuredCount === 0 && uninsuredCount === 0 ? (
-            <div style={{ textAlign: "center", padding: 40 }}>
-              <div style={{ fontSize: mobile ? 16 : 22, marginBottom: 16 }}>
-                RUN THE CLASS CENSUS FIRST TO GATHER INSURANCE DATA.
-              </div>
-              <button
-                onClick={() => { setTab("CLASS"); if (!classes) scrapeClasses(); playClick(); }}
-                style={{
-                  background: fg,
-                  color: bg,
-                  border: `3px solid ${fg}`,
-                  padding: "12px 24px",
-                  fontSize: mobile ? 16 : 20,
-                  fontWeight: 800,
-                  cursor: "pointer",
-                  fontFamily: `"${HEADING_FONT}", serif`,
-                }}
-              >
-                GO TO CLASS CENSUS
-              </button>
-            </div>
-          ) : (
-            <>
-              <div style={{ display: "grid", gridTemplateColumns: mobile ? "1fr" : "1fr 1fr", gap: 16 }}>
-                <div style={{ border: `3px solid ${fg}`, padding: mobile ? 16 : 24, textAlign: "center" }}>
-                  <div style={{ fontSize: mobile ? 14 : 16, letterSpacing: 3, marginBottom: 8, opacity: 0.7 }}>INSURED</div>
-                  <div style={{ fontSize: mobile ? 36 : 56, fontWeight: 800, fontFamily: `"${HEADING_FONT}", serif` }}>{insuredCount}</div>
-                  <div style={{ fontSize: mobile ? 14 : 18, marginTop: 4 }}>
-                    {((insuredCount / (insuredCount + uninsuredCount)) * 100).toFixed(1)}%
-                  </div>
-                </div>
-                <div style={{ border: `3px solid ${fg}`, padding: mobile ? 16 : 24, textAlign: "center" }}>
-                  <div style={{ fontSize: mobile ? 14 : 16, letterSpacing: 3, marginBottom: 8, opacity: 0.7 }}>UNINSURED</div>
-                  <div style={{ fontSize: mobile ? 36 : 56, fontWeight: 800, fontFamily: `"${HEADING_FONT}", serif` }}>{uninsuredCount}</div>
-                  <div style={{ fontSize: mobile ? 14 : 18, marginTop: 4 }}>
-                    {((uninsuredCount / (insuredCount + uninsuredCount)) * 100).toFixed(1)}%
-                  </div>
-                </div>
-              </div>
-
-              {/* "IT DIDN'T SAVE THEM" stat */}
-              {elimTotal > 0 && (
-                <div style={{
-                  border: `3px solid ${colors.error}`,
-                  padding: mobile ? 16 : 24,
-                  textAlign: "center",
-                  background: "rgba(139,26,26,0.08)",
-                }}>
-                  <div style={{ fontSize: mobile ? 20 : 32, fontWeight: 800, fontFamily: `"${HEADING_FONT}", serif`, color: colors.error }}>
-                    IT DIDN'T SAVE THEM
-                  </div>
-                  <div style={{ fontSize: mobile ? 14 : 18, marginTop: 8, opacity: 0.8 }}>
-                    {elimTotal} CITIZENS ELIMINATED REGARDLESS OF INSURANCE STATUS
-                  </div>
-                </div>
-              )}
-            </>
-          )}
+      {/* ─── BRIBE REPORT ─── */}
+      {sectionHeader("BRIBE REPORT")}
+      {!classes ? (
+        <div style={{ opacity: 0.5, fontWeight: 700, fontSize: mobile ? 14 : 18 }}>
+          RUN CENSUS TO POPULATE BRIBE DATA.
         </div>
-      )}
-
-      {/* BRIBES TAB */}
-      {tab === "BRIBES" && (
-        <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-          {!classes ? (
-            <div style={{ textAlign: "center", padding: 40 }}>
-              <div style={{ fontSize: mobile ? 16 : 22, marginBottom: 16 }}>
-                RUN THE CLASS CENSUS FIRST TO GATHER BRIBE DATA.
+      ) : !hasBribes ? (
+        <div style={{ opacity: 0.5, fontWeight: 700, fontSize: mobile ? 14 : 18 }}>
+          CACHED DATA PREDATES BRIBE TRACKING. RESCAN TO POPULATE.
+        </div>
+      ) : (
+        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          <div style={{ display: "grid", gridTemplateColumns: mobile ? "1fr" : "1fr 1fr 1fr", gap: 16 }}>
+            <div style={{ border: `3px solid ${fg}`, padding: mobile ? 16 : 24, textAlign: "center" }}>
+              <div style={{ fontSize: mobile ? 14 : 16, letterSpacing: 3, marginBottom: 8, opacity: 0.7 }}>BRIBED</div>
+              <div style={{ fontSize: mobile ? 36 : 56, fontWeight: 800, fontFamily: `"${HEADING_FONT}", serif` }}>{bribedCount}</div>
+              <div style={{ fontSize: mobile ? 14 : 18, marginTop: 4 }}>
+                {((bribedCount / (bribedCount + unbribedCount)) * 100).toFixed(1)}% OF CITIZENS
               </div>
-              <button
-                onClick={() => { scrapeClasses(); playClick(); }}
-                style={{
-                  background: fg,
-                  color: bg,
-                  border: `3px solid ${fg}`,
-                  padding: "12px 24px",
+            </div>
+            <div style={{ border: `3px solid ${fg}`, padding: mobile ? 16 : 24, textAlign: "center" }}>
+              <div style={{ fontSize: mobile ? 14 : 16, letterSpacing: 3, marginBottom: 8, opacity: 0.7 }}>UNBRIBED</div>
+              <div style={{ fontSize: mobile ? 36 : 56, fontWeight: 800, fontFamily: `"${HEADING_FONT}", serif` }}>{unbribedCount}</div>
+              <div style={{ fontSize: mobile ? 14 : 18, marginTop: 4 }}>
+                {((unbribedCount / (bribedCount + unbribedCount)) * 100).toFixed(1)}% OF CITIZENS
+              </div>
+            </div>
+            <div style={{ border: `3px solid ${fg}`, padding: mobile ? 16 : 24, textAlign: "center" }}>
+              <div style={{ fontSize: mobile ? 14 : 16, letterSpacing: 3, marginBottom: 8, opacity: 0.7 }}>REMAINING BRIBED</div>
+              <div style={{ fontSize: mobile ? 36 : 56, fontWeight: 800, fontFamily: `"${HEADING_FONT}", serif` }}>
+                {bribedCount - bribedElimCount}
+              </div>
+              <div style={{ fontSize: mobile ? 14 : 18, marginTop: 4 }}>
+                STILL ALIVE WITH BRIBES
+              </div>
+            </div>
+          </div>
+
+          {bribedElimCount > 0 && (
+            <div style={{
+              border: `3px solid ${colors.error}`,
+              padding: mobile ? 16 : 24,
+              textAlign: "center",
+              background: "rgba(139,26,26,0.08)",
+            }}>
+              <div style={{ fontSize: mobile ? 20 : 32, fontWeight: 800, fontFamily: `"${HEADING_FONT}", serif`, color: colors.error }}>
+                THE BRIBE DIDN'T HELP
+              </div>
+              <div style={{ fontSize: mobile ? 14 : 18, marginTop: 8, opacity: 0.8 }}>
+                {bribedElimCount} BRIBED CITIZENS ELIMINATED ANYWAY
+              </div>
+              <div style={{ fontSize: mobile ? 12 : 16, marginTop: 4, opacity: 0.6 }}>
+                {((bribedElimCount / bribedCount) * 100).toFixed(1)}% BRIBE FAILURE RATE
+              </div>
+            </div>
+          )}
+
+          {/* BRIBE LEADERBOARD */}
+          {bribeHolders.length > 0 && (() => {
+            const filtered = bribeFilter === "ALL" ? bribeHolders
+              : bribeHolders.filter(h => (h.status || "ALIVE") === bribeFilter);
+            return (
+            <div style={{ border: `3px solid ${fg}` }}>
+              <div style={{
+                background: fg, color: bg,
+                padding: mobile ? "10px 16px" : "12px 20px",
+                display: "flex", alignItems: "center", justifyContent: "space-between",
+                flexWrap: "wrap", gap: 8,
+              }}>
+                <span style={{
                   fontSize: mobile ? 16 : 20,
                   fontWeight: 800,
-                  cursor: "pointer",
                   fontFamily: `"${HEADING_FONT}", serif`,
-                }}
-              >
-                RUN CENSUS
-              </button>
-              {progress && (
-                <div style={{ marginTop: 16, background: fg, color: bg, padding: "8px 16px", fontWeight: 700, fontSize: mobile ? 14 : 18 }}>
-                  {progress}
-                </div>
-              )}
-              {error && <div style={{ marginTop: 8, color: colors.error, fontWeight: 700 }}>{error}</div>}
-            </div>
-          ) : bribedCount === 0 && unbribedCount === 0 ? (
-            <div style={{ textAlign: "center", padding: 40 }}>
-              <div style={{ fontSize: mobile ? 16 : 22, marginBottom: 16 }}>
-                CACHED DATA PREDATES BRIBE TRACKING. RESCAN TO POPULATE.
-              </div>
-              <button
-                onClick={() => { scrapeClasses(); playStaticBuzz(); }}
-                disabled={loading}
-                style={{
-                  background: fg,
-                  color: bg,
-                  border: `3px solid ${fg}`,
-                  padding: "12px 24px",
-                  fontSize: mobile ? 16 : 20,
-                  fontWeight: 800,
-                  cursor: loading ? "wait" : "pointer",
-                  fontFamily: `"${HEADING_FONT}", serif`,
-                }}
-              >
-                {loading ? "SCRAPING..." : "RESCAN CENSUS"}
-              </button>
-              {progress && (
-                <div style={{ marginTop: 16, background: fg, color: bg, padding: "8px 16px", fontWeight: 700, fontSize: mobile ? 14 : 18 }}>
-                  {progress}
-                </div>
-              )}
-            </div>
-          ) : (
-            <>
-              <div style={{ display: "flex", gap: 8, marginBottom: 4 }}>
-                <button
-                  onClick={() => { scrapeClasses(); playStaticBuzz(); }}
-                  disabled={loading}
-                  style={{
-                    background: "transparent",
-                    color: fg,
-                    border: `2px solid ${fg}`,
-                    padding: "4px 12px",
-                    fontSize: mobile ? 14 : 16,
-                    fontWeight: 700,
-                    cursor: "pointer",
-                    fontFamily: "inherit",
-                  }}
-                >
-                  {loading ? "SCRAPING..." : "RESCAN"}
-                </button>
-                {loading && progress && (
-                  <span style={{ padding: "4px 10px", background: fg, color: bg, fontWeight: 700, fontSize: mobile ? 14 : 16 }}>
-                    {progress}
-                  </span>
-                )}
-              </div>
-              <div style={{ display: "grid", gridTemplateColumns: mobile ? "1fr" : "1fr 1fr 1fr", gap: 16 }}>
-                <div style={{ border: `3px solid ${fg}`, padding: mobile ? 16 : 24, textAlign: "center" }}>
-                  <div style={{ fontSize: mobile ? 14 : 16, letterSpacing: 3, marginBottom: 8, opacity: 0.7 }}>BRIBED</div>
-                  <div style={{ fontSize: mobile ? 36 : 56, fontWeight: 800, fontFamily: `"${HEADING_FONT}", serif` }}>{bribedCount}</div>
-                  <div style={{ fontSize: mobile ? 14 : 18, marginTop: 4 }}>
-                    {((bribedCount / (bribedCount + unbribedCount)) * 100).toFixed(1)}% OF CITIZENS
-                  </div>
-                </div>
-                <div style={{ border: `3px solid ${fg}`, padding: mobile ? 16 : 24, textAlign: "center" }}>
-                  <div style={{ fontSize: mobile ? 14 : 16, letterSpacing: 3, marginBottom: 8, opacity: 0.7 }}>UNBRIBED</div>
-                  <div style={{ fontSize: mobile ? 36 : 56, fontWeight: 800, fontFamily: `"${HEADING_FONT}", serif` }}>{unbribedCount}</div>
-                  <div style={{ fontSize: mobile ? 14 : 18, marginTop: 4 }}>
-                    {((unbribedCount / (bribedCount + unbribedCount)) * 100).toFixed(1)}% OF CITIZENS
-                  </div>
-                </div>
-                <div style={{ border: `3px solid ${fg}`, padding: mobile ? 16 : 24, textAlign: "center" }}>
-                  <div style={{ fontSize: mobile ? 14 : 16, letterSpacing: 3, marginBottom: 8, opacity: 0.7 }}>REMAINING BRIBED</div>
-                  <div style={{ fontSize: mobile ? 36 : 56, fontWeight: 800, fontFamily: `"${HEADING_FONT}", serif` }}>
-                    {bribedCount - bribedElimCount}
-                  </div>
-                  <div style={{ fontSize: mobile ? 14 : 18, marginTop: 4 }}>
-                    STILL ALIVE WITH BRIBES
-                  </div>
-                </div>
-              </div>
-
-              {bribedElimCount > 0 && (
-                <div style={{
-                  border: `3px solid ${colors.error}`,
-                  padding: mobile ? 16 : 24,
-                  textAlign: "center",
-                  background: "rgba(139,26,26,0.08)",
+                  letterSpacing: 3,
                 }}>
-                  <div style={{ fontSize: mobile ? 20 : 32, fontWeight: 800, fontFamily: `"${HEADING_FONT}", serif`, color: colors.error }}>
-                    THE BRIBE DIDN'T HELP
-                  </div>
-                  <div style={{ fontSize: mobile ? 14 : 18, marginTop: 8, opacity: 0.8 }}>
-                    {bribedElimCount} BRIBED CITIZENS ELIMINATED ANYWAY
-                  </div>
-                  <div style={{ fontSize: mobile ? 12 : 16, marginTop: 4, opacity: 0.6 }}>
-                    {((bribedElimCount / bribedCount) * 100).toFixed(1)}% BRIBE FAILURE RATE
-                  </div>
+                  BRIBE HOLDERS — {filtered.length}
+                </span>
+                <div style={{ display: "flex", gap: 4 }}>
+                  {["ALL", "ALIVE", "ELIMINATED"].map(f => (
+                    <button
+                      key={f}
+                      onClick={() => { setBribeFilter(f); playClick(); }}
+                      style={{
+                        background: bribeFilter === f ? bg : "transparent",
+                        color: bribeFilter === f ? fg : bg,
+                        border: `2px solid ${bg}`,
+                        padding: "2px 10px",
+                        fontSize: mobile ? 11 : 13,
+                        fontWeight: 800,
+                        cursor: "pointer",
+                        fontFamily: `"${BODY_FONT}", monospace`,
+                        letterSpacing: 1,
+                      }}
+                    >
+                      {f}
+                    </button>
+                  ))}
                 </div>
-              )}
-
-              {/* BRIBE LEADERBOARD */}
-              {bribeHolders.length > 0 && (() => {
-                const filtered = bribeFilter === "ALL" ? bribeHolders
-                  : bribeHolders.filter(h => (h.status || "ALIVE") === bribeFilter);
-                return (
-                <div style={{ border: `3px solid ${fg}` }}>
-                  <div style={{
-                    background: fg, color: bg,
-                    padding: mobile ? "10px 16px" : "12px 20px",
-                    display: "flex", alignItems: "center", justifyContent: "space-between",
-                    flexWrap: "wrap", gap: 8,
-                  }}>
-                    <span style={{
-                      fontSize: mobile ? 16 : 20,
+              </div>
+              <div style={{ maxHeight: 400, overflowY: "auto" }}>
+                {filtered.map((h, i) => (
+                  <div
+                    key={h.id}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      padding: mobile ? "8px 12px" : "10px 20px",
+                      borderBottom: i < filtered.length - 1 ? `1px solid ${fg}33` : "none",
+                      fontSize: mobile ? 14 : 16,
+                      fontFamily: `"${BODY_FONT}", monospace`,
+                    }}
+                  >
+                    <div style={{ display: "flex", alignItems: "center", gap: mobile ? 8 : 16, flexWrap: "wrap" }}>
+                      <span style={{
+                        fontWeight: 800,
+                        opacity: 0.4,
+                        width: mobile ? 28 : 36,
+                        fontSize: mobile ? 12 : 14,
+                        flexShrink: 0,
+                      }}>
+                        {i + 1}
+                      </span>
+                      <span style={{ fontWeight: 700 }}>{h.name}</span>
+                      <span style={{
+                        fontSize: mobile ? 11 : 13,
+                        opacity: 0.5,
+                        textTransform: "uppercase",
+                      }}>
+                        {h.class}
+                      </span>
+                      <span style={{
+                        fontSize: mobile ? 10 : 12,
+                        fontWeight: 800,
+                        padding: "1px 6px",
+                        background: h.status === "ALIVE" ? "#008800" : colors.error,
+                        color: "#fff",
+                        letterSpacing: 1,
+                      }}>
+                        {h.status || "ALIVE"}
+                      </span>
+                    </div>
+                    <div style={{
+                      background: fg,
+                      color: bg,
+                      padding: "2px 10px",
                       fontWeight: 800,
-                      fontFamily: `"${HEADING_FONT}", serif`,
-                      letterSpacing: 3,
+                      fontSize: mobile ? 14 : 16,
+                      minWidth: mobile ? 30 : 40,
+                      textAlign: "center",
                     }}>
-                      BRIBE HOLDERS — {filtered.length}
-                    </span>
-                    <div style={{ display: "flex", gap: 4 }}>
-                      {["ALL", "ALIVE", "ELIMINATED"].map(f => (
-                        <button
-                          key={f}
-                          onClick={() => { setBribeFilter(f); playClick(); }}
-                          style={{
-                            background: bribeFilter === f ? bg : "transparent",
-                            color: bribeFilter === f ? fg : bg,
-                            border: `2px solid ${bg}`,
-                            padding: "2px 10px",
-                            fontSize: mobile ? 11 : 13,
-                            fontWeight: 800,
-                            cursor: "pointer",
-                            fontFamily: `"${BODY_FONT}", monospace`,
-                            letterSpacing: 1,
-                          }}
-                        >
-                          {f}
-                        </button>
-                      ))}
+                      {h.bribes}
                     </div>
                   </div>
-                  <div style={{ maxHeight: 400, overflowY: "auto" }}>
-                    {filtered.map((h, i) => (
-                      <div
-                        key={h.id}
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "space-between",
-                          padding: mobile ? "8px 12px" : "10px 20px",
-                          borderBottom: i < filtered.length - 1 ? `1px solid ${fg}33` : "none",
-                          fontSize: mobile ? 14 : 16,
-                          fontFamily: `"${BODY_FONT}", monospace`,
-                        }}
-                      >
-                        <div style={{ display: "flex", alignItems: "center", gap: mobile ? 8 : 16, flexWrap: "wrap" }}>
-                          <span style={{
-                            fontWeight: 800,
-                            opacity: 0.4,
-                            width: mobile ? 28 : 36,
-                            fontSize: mobile ? 12 : 14,
-                            flexShrink: 0,
-                          }}>
-                            {i + 1}
-                          </span>
-                          <span style={{ fontWeight: 700 }}>{h.name}</span>
-                          <span style={{
-                            fontSize: mobile ? 11 : 13,
-                            opacity: 0.5,
-                            textTransform: "uppercase",
-                          }}>
-                            {h.class}
-                          </span>
-                          <span style={{
-                            fontSize: mobile ? 10 : 12,
-                            fontWeight: 800,
-                            padding: "1px 6px",
-                            background: h.status === "ALIVE" ? "#008800" : colors.error,
-                            color: "#fff",
-                            letterSpacing: 1,
-                          }}>
-                            {h.status || "ALIVE"}
-                          </span>
-                        </div>
-                        <div style={{
-                          background: fg,
-                          color: bg,
-                          padding: "2px 10px",
-                          fontWeight: 800,
-                          fontSize: mobile ? 14 : 16,
-                          minWidth: mobile ? 30 : 40,
-                          textAlign: "center",
-                        }}>
-                          {h.bribes}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                );
-              })()}
-            </>
-          )}
+                ))}
+              </div>
+            </div>
+            );
+          })()}
         </div>
       )}
     </div>
