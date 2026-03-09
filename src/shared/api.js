@@ -85,6 +85,33 @@ export function parseEvaderMeta(nft) {
   };
 }
 
+export async function fetchWalletViaOpenSea(wallet) {
+  const res = await fetch(`/api/wallet-nfts?wallet=${encodeURIComponent(wallet)}`);
+  if (!res.ok) throw new Error(`OpenSea API ${res.status}`);
+  const nfts = await res.json();
+  return nfts.map((n) => {
+    const auditHash = cyrb53(n.id, 6969);
+    const taxHash = cyrb53(n.id, 4200);
+    return {
+      id: n.id,
+      name: n.name,
+      image: n.image,
+      class: "UNKNOWN",
+      insured: "",
+      status: n.isEvader ? "ELIMINATED" : "ALIVE",
+      background: "",
+      headwear: "",
+      expression: "",
+      eyewear: "",
+      skin: "",
+      allTraits: {},
+      inAudit: (auditHash % 100) < 5,
+      taxDue: (taxHash % 100) < 12,
+      isEvader: n.isEvader || false,
+    };
+  });
+}
+
 export async function fetchWalletNFTs(wallet) {
   let allNfts = [];
   let pageKey = null;

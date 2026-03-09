@@ -11,7 +11,7 @@ import ShareCard from "./ShareCard";
 import { useTheme } from "./shared/theme";
 import { useSound } from "./shared/sound";
 import { loadImage } from "./shared/utils";
-import { fetchWalletNFTs, fetchWalletEvaders, fetchTokenById, fetchEvaderById, CONTRACT, EVADER_CONTRACT } from "./shared/api";
+import { fetchWalletNFTs, fetchWalletEvaders, fetchWalletViaOpenSea, fetchTokenById, fetchEvaderById, CONTRACT, EVADER_CONTRACT } from "./shared/api";
 import { W, H, HEADING_FONT as CANVAS_HEADING, BODY_FONT, loadAssets } from "./shared/canvas";
 import { TEMPLATES, RENDERERS, buildWastedGif } from "./templates";
 /* ═══════════════════════════════════════════════
@@ -85,7 +85,6 @@ export default function App() {
   const [gridSize, setGridSize] = useState(3);
   const [gridImages, setGridImages] = useState([]);
   const [gridSlots, setGridSlots] = useState([]); // array of nft objects or null per slot
-  const [gridSelectedCell, setGridSelectedCell] = useState(null); // index of cell to fill
 
   const [menuOpen, setMenuOpen] = useState(false);
   const navTo = (v) => {
@@ -193,7 +192,6 @@ export default function App() {
       newSlots.push(i < ownedNFTs.length ? ownedNFTs[i] : null);
     }
     setGridSlots(newSlots);
-    setGridSelectedCell(null);
   }, [tpl, gridSize, ownedNFTs]);
 
   // Load images for grid slots
@@ -263,11 +261,17 @@ export default function App() {
     setError("");
     setOwnedNFTs([]);
     try {
-      const [citizens, evaders] = await Promise.all([
-        fetchWalletNFTs(w),
-        fetchWalletEvaders(w),
-      ]);
-      const combined = [...citizens, ...evaders];
+      // Try OpenSea first (better evader images), fallback to Alchemy
+      let combined;
+      try {
+        combined = await fetchWalletViaOpenSea(w);
+      } catch {
+        const [citizens, evaders] = await Promise.all([
+          fetchWalletNFTs(w),
+          fetchWalletEvaders(w),
+        ]);
+        combined = [...citizens, ...evaders];
+      }
       if (combined.length === 0) {
         setError("No Death & Taxes NFTs found in this wallet");
       }
@@ -1200,14 +1204,8 @@ export default function App() {
                   <div
                     key={`${nft.isEvader ? "e" : "c"}_${nft.id}`}
                     onClick={() => {
-                      if (tpl === "grid" && gridSelectedCell !== null) {
-                        // Place NFT in selected grid cell
-                        const newSlots = [...gridSlots];
-                        newSlots[gridSelectedCell] = nft;
-                        setGridSlots(newSlots);
-                        setGridSelectedCell(null);
-                      } else if (tpl === "grid") {
-                        // Find first empty slot and fill it
+                      if (tpl === "grid") {
+                        // Add to first empty slot
                         const emptyIdx = gridSlots.findIndex(s => !s);
                         if (emptyIdx !== -1) {
                           const newSlots = [...gridSlots];
@@ -1220,7 +1218,7 @@ export default function App() {
                     }}
                     style={{
                       cursor: "pointer",
-                      border: selected ? `2px solid ${uiFg}` : gridSelectedCell !== null && tpl === "grid" ? `2px solid ${colors.error}` : `2px solid transparent`,
+                      border: selected ? `2px solid ${uiFg}` : `2px solid transparent`,
                       transition: "all 0.1s",
                       position: "relative",
                       background: selected ? uiFg : "transparent",
@@ -1456,85 +1454,9 @@ export default function App() {
                     </button>
                   ))}
                 </div>
-                {!wallet ? (
-                  <div style={{ fontSize: 11, opacity: 0.6, marginTop: 6, fontFamily: `"${BODY_FONT}", monospace` }}>
-                    CONNECT WALLET TO POPULATE GRID
-                  </div>
-                ) : (
-                  <>
-                    {ownedNFTs.length > 0 && (
-                      <div style={{ fontSize: 11, opacity: 0.6, marginTop: 6, fontFamily: `"${BODY_FONT}", monospace` }}>
-                        {ownedNFTs.length} NFT{ownedNFTs.length !== 1 ? "S" : ""} AVAILABLE
-                      </div>
-                    )}
-                    {/* Mini grid editor */}
-                    <div style={{ marginTop: 8 }}>
-                      <div style={{ fontSize: 10, opacity: 0.5, marginBottom: 4, fontFamily: `"${BODY_FONT}", monospace` }}>
-                        {gridSelectedCell !== null ? `SELECT NFT FOR CELL ${gridSelectedCell + 1}` : "TAP CELL TO EDIT"}
-                      </div>
-                      <div style={{
-                        display: "grid",
-                        gridTemplateColumns: `repeat(${gridSize}, 1fr)`,
-                        gap: 2,
-                        border: `1px solid ${uiFg}`,
-                        padding: 2,
-                      }}>
-                        {gridSlots.map((slot, i) => (
-                          <div
-                            key={i}
-                            onClick={() => {
-                              if (gridSelectedCell === i) {
-                                // Deselect
-                                setGridSelectedCell(null);
-                              } else if (slot && gridSelectedCell === null) {
-                                // Clear this cell or select it for swap
-                                setGridSelectedCell(i);
-                              } else if (gridSelectedCell !== null && slot) {
-                                // Swap cells
-                                const newSlots = [...gridSlots];
-                                const tmp = newSlots[i];
-                                newSlots[i] = newSlots[gridSelectedCell];
-                                newSlots[gridSelectedCell] = tmp;
-                                setGridSlots(newSlots);
-                                setGridSelectedCell(null);
-                              } else {
-                                setGridSelectedCell(i);
-                              }
-                            }}
-                            style={{
-                              aspectRatio: "1",
-                              background: gridSelectedCell === i ? colors.error : slot ? uiFg : `${uiFg}22`,
-                              cursor: "pointer",
-                              overflow: "hidden",
-                              border: gridSelectedCell === i ? `2px solid ${colors.error}` : "none",
-                            }}
-                          >
-                            {slot && slot.image && (
-                              <img src={slot.image} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block", imageRendering: "pixelated" }} />
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                      {gridSelectedCell !== null && (
-                        <button
-                          onClick={() => {
-                            const newSlots = [...gridSlots];
-                            newSlots[gridSelectedCell] = null;
-                            setGridSlots(newSlots);
-                            setGridSelectedCell(null);
-                          }}
-                          style={{
-                            marginTop: 4, width: "100%", background: colors.error, color: "#fff",
-                            border: "none", padding: "4px", fontSize: 11, fontWeight: 700, cursor: "pointer",
-                            fontFamily: `"${BODY_FONT}", monospace`,
-                          }}
-                        >
-                          CLEAR CELL
-                        </button>
-                      )}
-                    </div>
-                  </>
-                )}
+                <div style={{ fontSize: 10, opacity: 0.5, marginTop: 6, fontFamily: `"${BODY_FONT}", monospace` }}>
+                  {!wallet ? "CONNECT WALLET TO POPULATE" : "CLICK CELL TO REMOVE · DRAG TO REORDER"}
+                </div>
               </div>
             )}
           </div>
@@ -1566,6 +1488,7 @@ export default function App() {
             <canvas
               ref={cvs}
               onClick={() => {
+                if (tpl === "grid") return; // handled by overlay
                 const c = cvs.current;
                 if (!c) return;
                 if (tpl === "wasted" && gifPreviewUrl) {
@@ -1588,9 +1511,74 @@ export default function App() {
                 maxWidth: 420,
                 height: "auto",
                 display: gifPreviewUrl ? "none" : "block",
-                cursor: "pointer",
+                cursor: tpl === "grid" ? "default" : "pointer",
               }}
             />
+            {/* Grid overlay for drag-to-reorder and click-to-remove */}
+            {tpl === "grid" && !gifPreviewUrl && (
+              <div
+                style={{
+                  position: "absolute",
+                  top: `${12 + 0}px`, // 12px padding
+                  left: "12px",
+                  right: "12px",
+                  bottom: "12px",
+                  pointerEvents: "none",
+                }}
+              >
+                <div style={{
+                  position: "absolute",
+                  top: `${148 / 1228 * 100}%`,
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  display: "grid",
+                  gridTemplateColumns: `repeat(${gridSize}, 1fr)`,
+                  gridTemplateRows: `repeat(${gridSize}, 1fr)`,
+                  gap: `${Math.max(2, Math.round(4 / (gridSize / 3))) / 1080 * 100}%`,
+                  padding: `${Math.max(2, Math.round(4 / (gridSize / 3))) / 1080 * 100}%`,
+                  pointerEvents: "auto",
+                }}>
+                  {gridSlots.map((slot, i) => (
+                    <div
+                      key={i}
+                      draggable={!!slot}
+                      onDragStart={(e) => {
+                        e.dataTransfer.setData("text/plain", String(i));
+                        e.dataTransfer.effectAllowed = "move";
+                      }}
+                      onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = "move"; }}
+                      onDrop={(e) => {
+                        e.preventDefault();
+                        const fromIdx = parseInt(e.dataTransfer.getData("text/plain"));
+                        if (isNaN(fromIdx) || fromIdx === i) return;
+                        const newSlots = [...gridSlots];
+                        const tmp = newSlots[i];
+                        newSlots[i] = newSlots[fromIdx];
+                        newSlots[fromIdx] = tmp;
+                        setGridSlots(newSlots);
+                      }}
+                      onClick={() => {
+                        if (slot) {
+                          // Remove NFT from cell
+                          const newSlots = [...gridSlots];
+                          newSlots[i] = null;
+                          setGridSlots(newSlots);
+                        }
+                      }}
+                      style={{
+                        cursor: slot ? "grab" : "default",
+                        borderRadius: 2,
+                        transition: "box-shadow 0.15s",
+                        boxShadow: slot ? "inset 0 0 0 1px rgba(255,255,255,0.1)" : "none",
+                      }}
+                      onMouseOver={(e) => { if (slot) e.currentTarget.style.boxShadow = "inset 0 0 0 2px rgba(255,0,0,0.6)"; }}
+                      onMouseOut={(e) => { e.currentTarget.style.boxShadow = slot ? "inset 0 0 0 1px rgba(255,255,255,0.1)" : "none"; }}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
             {gifPreviewUrl && (
               <img
                 src={gifPreviewUrl}
