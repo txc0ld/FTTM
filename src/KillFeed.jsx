@@ -266,7 +266,7 @@ export default function KillFeed({ mobile }) {
                 <div style={{
                   fontSize: k.rank <= 3 ? (mobile ? 22 : 32) : (mobile ? 16 : 20),
                   fontWeight: 900,
-                  fontFamily: `"${HEADING_FONT}", monospace`,
+                  fontFamily: `"${BODY_FONT}", monospace`,
                   width: mobile ? 36 : 48,
                   textAlign: "center",
                   flexShrink: 0,
@@ -332,7 +332,7 @@ export default function KillFeed({ mobile }) {
                 <div style={{
                   fontSize: k.rank <= 3 ? (mobile ? 20 : 28) : (mobile ? 16 : 20),
                   fontWeight: 900,
-                  fontFamily: `"${HEADING_FONT}", monospace`,
+                  fontFamily: `"${BODY_FONT}", monospace`,
                   width: mobile ? 40 : 56,
                   textAlign: "right",
                   flexShrink: 0,
@@ -368,7 +368,7 @@ export default function KillFeed({ mobile }) {
                   gap: 4,
                 }}
               >
-                <div style={{ fontSize: mobile ? 18 : 24, fontWeight: 900, fontFamily: `"${HEADING_FONT}", monospace` }}>
+                <div style={{ fontSize: mobile ? 18 : 24, fontWeight: 900, fontFamily: `"${BODY_FONT}", monospace` }}>
                   #{k.tokenId}
                 </div>
                 <div style={{
@@ -421,7 +421,7 @@ export default function KillFeed({ mobile }) {
               <div style={{
                 fontSize: a.rank <= 3 ? (mobile ? 22 : 32) : (mobile ? 16 : 20),
                 fontWeight: 900,
-                fontFamily: `"${HEADING_FONT}", monospace`,
+                fontFamily: `"${BODY_FONT}", monospace`,
                 width: mobile ? 36 : 48,
                 textAlign: "center",
                 flexShrink: 0,
@@ -471,7 +471,7 @@ export default function KillFeed({ mobile }) {
               <div style={{
                 fontSize: a.rank <= 3 ? (mobile ? 20 : 28) : (mobile ? 16 : 20),
                 fontWeight: 900,
-                fontFamily: `"${HEADING_FONT}", monospace`,
+                fontFamily: `"${BODY_FONT}", monospace`,
                 width: mobile ? 40 : 56,
                 textAlign: "right",
                 flexShrink: 0,
@@ -505,7 +505,7 @@ export default function KillFeed({ mobile }) {
                   gap: 4,
                 }}
               >
-                <div style={{ fontSize: mobile ? 14 : 18, fontWeight: 900, fontFamily: `"${HEADING_FONT}", monospace` }}>
+                <div style={{ fontSize: mobile ? 14 : 18, fontWeight: 900, fontFamily: `"${BODY_FONT}", monospace` }}>
                   #{a.fromTokenId} → #{a.targetTokenId}
                 </div>
                 <div style={{
