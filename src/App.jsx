@@ -1528,15 +1528,14 @@ export default function App() {
               >
                 <div style={{
                   position: "absolute",
-                  top: `${148 / 1228 * 100}%`,
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
+                  top: `${(148 + 24) / 1228 * 100}%`,
+                  left: `${24 / 1080 * 100}%`,
+                  right: `${24 / 1080 * 100}%`,
+                  bottom: `${24 / 1228 * 100}%`,
                   display: "grid",
                   gridTemplateColumns: `repeat(${gridSize}, 1fr)`,
                   gridTemplateRows: `repeat(${gridSize}, 1fr)`,
                   gap: `${Math.max(2, Math.round(4 / (gridSize / 3))) / 1080 * 100}%`,
-                  padding: `${Math.max(2, Math.round(4 / (gridSize / 3))) / 1080 * 100}%`,
                   pointerEvents: "auto",
                 }}>
                   {gridSlots.map((slot, i) => (

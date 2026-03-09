@@ -1540,17 +1540,28 @@ function drawGrid(ctx, _img, _id, _meta, _evaderImg, gridImages, gridSize) {
 
   // Grid
   const gridTop = headerH + 8;
-  const gridArea = cw;
+  const outerPad = 24;
+  const gridArea = cw - outerPad * 2;
   const gap = Math.max(2, Math.round(4 / (n / 3)));
-  const totalGap = gap * (n + 1);
+  const totalGap = gap * (n - 1);
   const cellSize = (gridArea - totalGap) / n;
+
+  // Black border around grid
+  const borderW = 4;
+  const gridX = outerPad - borderW;
+  const gridY = gridTop + outerPad - borderW;
+  const gridW = gridArea + borderW * 2;
+  const gridH = gridArea + borderW * 2;
+  ctx.strokeStyle = BK;
+  ctx.lineWidth = borderW;
+  ctx.strokeRect(gridX + borderW / 2, gridY + borderW / 2, gridW - borderW, gridH - borderW);
 
   const imgs = gridImages || [];
   for (let row = 0; row < n; row++) {
     for (let col = 0; col < n; col++) {
       const idx = row * n + col;
-      const x = gap + col * (cellSize + gap);
-      const y = gridTop + gap + row * (cellSize + gap);
+      const x = outerPad + col * (cellSize + gap);
+      const y = gridTop + outerPad + row * (cellSize + gap);
 
       if (idx < imgs.length && imgs[idx]) {
         const im = imgs[idx];
