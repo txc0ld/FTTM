@@ -1,5 +1,7 @@
 import React, { useState } from "react";
 import { useTheme } from "./shared/theme";
+import { CONTRACT, fetchNFTsForContract } from "./shared/api";
+import { cyrb53 } from "./shared/utils";
 
 export default function IrsWatchdog({ mobile, ownedNFTs, selectNFT, setView, wallet, setWallet, handleWalletFetch, loading, error }) {
   const { colors } = useTheme();
@@ -19,51 +21,34 @@ export default function IrsWatchdog({ mobile, ownedNFTs, selectNFT, setView, wal
     return 0;
   });
 
-  const CONTRACT = "0x4f249b2dc6cecbd549a0c354bbfc4919e8c5d3ae";
-  const ALCHEMY_BASE = "https://eth-mainnet.g.alchemy.com/nft/v3/WgO0U6P7fqu1fJNQoDFos";
-
   const scrapeContract = async () => {
     setIsScraping(true);
     setPagesScraped(0);
     let pageKey = "";
     const foundAlerts = [];
-    
-    // Deterministic pseudo-random string hasher to consistently "audit" the same NFTs
-    const cyrb53 = (str, seed = 0) => {
-      let h1 = 0xdeadbeef ^ seed, h2 = 0x41c6ce57 ^ seed;
-      for (let i = 0, ch; i < str.length; i++) {
-        ch = str.charCodeAt(i);
-        h1 = Math.imul(h1 ^ ch, 2654435761);
-        h2 = Math.imul(h2 ^ ch, 1597334677);
-      }
-      h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507) ^ Math.imul(h2 ^ (h2 >>> 13), 3266489909);
-      h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909);
-      return 4294967296 * (2097151 & h2) + (h1 >>> 0);
-    };
 
     try {
       while (true) {
-        let url = `${ALCHEMY_BASE}/getNFTsForContract?contractAddress=${CONTRACT}&withMetadata=true&limit=100`;
-        if (pageKey) url += `&pageKey=${pageKey}`;
-        
-        const res = await fetch(url);
-        if (!res.ok) break;
-        const data = await res.json();
+        const data = await fetchNFTsForContract(CONTRACT, {
+          withMetadata: true,
+          limit: 100,
+          pageKey: pageKey || undefined,
+        });
         const nfts = data.nfts || [];
-        
+
         for (const nft of nfts) {
           const attrs = nft.raw?.metadata?.attributes || [];
           let classType = "UNKNOWN";
-          
+
           attrs.forEach(a => {
             const t = (a.trait_type || "").toLowerCase();
             if (t === "class" || t === "type") classType = (a.value || "").toUpperCase();
           });
-          
+
           // Since the contract is unverified and IPFS metadata lacks the audit array,
           // we deterministically simulate global audits directly off the tokenId hash (approx 3% hit rate).
           const hashVal = cyrb53(nft.tokenId, 6969);
-          const isAudited = (hashVal % 100) < 3; 
+          const isAudited = (hashVal % 100) < 3;
 
           if (isAudited) {
             const statusStr = hashVal % 2 === 0 ? "UNDER AUDIT" : "DELINQUENT";
@@ -71,7 +56,7 @@ export default function IrsWatchdog({ mobile, ownedNFTs, selectNFT, setView, wal
             foundAlerts.push({ id: nft.tokenId, class: classType, image: i, status: statusStr });
           }
         }
-        
+
         setPagesScraped(prev => prev + 1);
         if (data.pageKey) {
           pageKey = data.pageKey;
@@ -81,7 +66,7 @@ export default function IrsWatchdog({ mobile, ownedNFTs, selectNFT, setView, wal
           break;
         }
       }
-      
+
       // Sort global audits by ID
       foundAlerts.sort((a, b) => parseInt(a.id) - parseInt(b.id));
       setGlobalAudited(foundAlerts);

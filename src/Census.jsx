@@ -1,12 +1,10 @@
 import { useState, useEffect, useRef } from "react";
 import { useTheme } from "./shared/theme";
 import { useSound } from "./shared/sound";
+import { CONTRACT, EVADER_CONTRACT, fetchNFTsForContract, fetchContractMeta as apiFetchContractMeta } from "./shared/api";
 
 const HEADING_FONT = "Bajern";
 const BODY_FONT = "DeptBody";
-const CONTRACT = "0x4f249b2dc6cecbd549a0c354bbfc4919e8c5d3ae";
-const EVADER_CONTRACT = "0x075f90ff6b89a1c164fb352bebd0a16f55804ca2";
-const ALCHEMY_BASE = "https://eth-mainnet.g.alchemy.com/nft/v3/WgO0U6P7fqu1fJNQoDFos";
 
 const CENSUS_LS = "dt_census_cache";
 const SIX_HOURS = 6 * 60 * 60 * 1000;
@@ -32,6 +30,9 @@ export default function Census({ mobile }) {
   const [classEliminated, setClassEliminated] = useState({});
   const [insuredCount, setInsuredCount] = useState(0);
   const [uninsuredCount, setUninsuredCount] = useState(0);
+  const [bribedCount, setBribedCount] = useState(0);
+  const [unbribedCount, setUnbribedCount] = useState(0);
+  const [bribedElimCount, setBribedElimCount] = useState(0);
   const [loading, setLoading] = useState(false);
   const [progress, setProgress] = useState("");
   const [error, setError] = useState("");
@@ -48,8 +49,11 @@ export default function Census({ mobile }) {
       if (cached.classEliminated) setClassEliminated(cached.classEliminated);
       if (cached.insuredCount != null) setInsuredCount(cached.insuredCount);
       if (cached.uninsuredCount != null) setUninsuredCount(cached.uninsuredCount);
+      if (cached.bribedCount != null) setBribedCount(cached.bribedCount);
+      if (cached.unbribedCount != null) setUnbribedCount(cached.unbribedCount);
+      if (cached.bribedElimCount != null) setBribedElimCount(cached.bribedElimCount);
     }
-    fetchContractMeta();
+    fetchContractMetaData();
   }, []);
 
   // Draw bar chart when classes change
@@ -58,12 +62,9 @@ export default function Census({ mobile }) {
     drawChart();
   }, [classes, classEliminated, tab, colors]);
 
-  const fetchContractMeta = async () => {
+  const fetchContractMetaData = async () => {
     try {
-      const url = `${ALCHEMY_BASE}/getContractMetadata?contractAddress=${CONTRACT}`;
-      const res = await fetch(url);
-      if (!res.ok) return;
-      const data = await res.json();
+      const data = await apiFetchContractMeta(CONTRACT);
       setContractMeta(data);
     } catch {}
   };
@@ -75,17 +76,18 @@ export default function Census({ mobile }) {
     try {
       const classCounts = {};
       const classInsured = { yes: 0, no: 0 };
+      const classBribes = { yes: 0, no: 0 };
       let pageKey = null;
       let pages = 0;
       let total = 0;
 
       // Scrape main contract for class data
       do {
-        let url = `${ALCHEMY_BASE}/getNFTsForContract?contractAddress=${CONTRACT}&withMetadata=true&limit=100`;
-        if (pageKey) url += `&pageKey=${pageKey}`;
-        const res = await fetch(url);
-        if (!res.ok) throw new Error(`API ${res.status}`);
-        const data = await res.json();
+        const data = await fetchNFTsForContract(CONTRACT, {
+          withMetadata: true,
+          limit: 100,
+          pageKey: pageKey || undefined,
+        });
 
         (data.nfts || []).forEach((nft) => {
           const attrs = {};
@@ -97,6 +99,9 @@ export default function Census({ mobile }) {
           const ins = (attrs.insured || attrs.insurance || "").toLowerCase();
           if (ins === "yes") classInsured.yes++;
           else classInsured.no++;
+          const bribe = (attrs.bribe || attrs.bribes || "").toLowerCase();
+          if (bribe && bribe !== "none" && bribe !== "no") classBribes.yes++;
+          else classBribes.no++;
           total++;
         });
 
@@ -108,14 +113,20 @@ export default function Census({ mobile }) {
 
       // Now scrape evader contract to get elimination counts per class
       const elimByClass = {};
+      let bribedElim = 0;
       let evaderKey = null;
       let evaderPages = 0;
       do {
-        let url = `${ALCHEMY_BASE}/getNFTsForContract?contractAddress=${EVADER_CONTRACT}&withMetadata=true&limit=100`;
-        if (evaderKey) url += `&pageKey=${evaderKey}`;
-        const res = await fetch(url);
-        if (!res.ok) break;
-        const data = await res.json();
+        let data;
+        try {
+          data = await fetchNFTsForContract(EVADER_CONTRACT, {
+            withMetadata: true,
+            limit: 100,
+            pageKey: evaderKey || undefined,
+          });
+        } catch {
+          break;
+        }
 
         (data.nfts || []).forEach((nft) => {
           const attrs = {};
@@ -124,6 +135,8 @@ export default function Census({ mobile }) {
           });
           const cls = (attrs.class || attrs.type || "UNKNOWN").toUpperCase();
           elimByClass[cls] = (elimByClass[cls] || 0) + 1;
+          const bribe = (attrs.bribe || attrs.bribes || "").toLowerCase();
+          if (bribe && bribe !== "none" && bribe !== "no") bribedElim++;
         });
 
         evaderPages++;
@@ -136,7 +149,10 @@ export default function Census({ mobile }) {
       setClassEliminated(elimByClass);
       setInsuredCount(classInsured.yes);
       setUninsuredCount(classInsured.no);
-      saveCensusCache({ classes: classCounts, classEliminated: elimByClass, insuredCount: classInsured.yes, uninsuredCount: classInsured.no });
+      setBribedCount(classBribes.yes);
+      setUnbribedCount(classBribes.no);
+      setBribedElimCount(bribedElim);
+      saveCensusCache({ classes: classCounts, classEliminated: elimByClass, insuredCount: classInsured.yes, uninsuredCount: classInsured.no, bribedCount: classBribes.yes, unbribedCount: classBribes.no, bribedElimCount: bribedElim });
       setProgress("");
     } catch (e) {
       setError(e.message || "CENSUS FAILED");
@@ -209,13 +225,13 @@ export default function Census({ mobile }) {
           CENSUS BUREAU
         </div>
         <div style={{ fontSize: mobile ? 14 : 18, marginTop: 8, opacity: 0.7 }}>
-          POPULATION DATA // CLASS BREAKDOWN // INSURANCE REPORT
+          POPULATION DATA // CLASS BREAKDOWN // INSURANCE REPORT // BRIBE REPORT
         </div>
       </div>
 
       {/* TAB NAV */}
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-        {["POPULATION", "CLASS", "INSURANCE"].map((t) => (
+        {["POPULATION", "CLASS", "INSURANCE", "BRIBES"].map((t) => (
           <button
             key={t}
             onClick={() => { setTab(t); playClick(); }}
@@ -380,6 +396,81 @@ export default function Census({ mobile }) {
                   </div>
                   <div style={{ fontSize: mobile ? 14 : 18, marginTop: 8, opacity: 0.8 }}>
                     {elimTotal} CITIZENS ELIMINATED REGARDLESS OF INSURANCE STATUS
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      )}
+
+      {/* BRIBES TAB */}
+      {tab === "BRIBES" && (
+        <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+          {bribedCount === 0 && unbribedCount === 0 ? (
+            <div style={{ textAlign: "center", padding: 40 }}>
+              <div style={{ fontSize: mobile ? 16 : 22, marginBottom: 16 }}>
+                RUN THE CLASS CENSUS FIRST TO GATHER BRIBE DATA.
+              </div>
+              <button
+                onClick={() => { setTab("CLASS"); if (!classes) scrapeClasses(); playClick(); }}
+                style={{
+                  background: fg,
+                  color: bg,
+                  border: `3px solid ${fg}`,
+                  padding: "12px 24px",
+                  fontSize: mobile ? 16 : 20,
+                  fontWeight: 800,
+                  cursor: "pointer",
+                  fontFamily: `"${HEADING_FONT}", serif`,
+                }}
+              >
+                GO TO CLASS CENSUS
+              </button>
+            </div>
+          ) : (
+            <>
+              <div style={{ display: "grid", gridTemplateColumns: mobile ? "1fr" : "1fr 1fr 1fr", gap: 16 }}>
+                <div style={{ border: `3px solid ${fg}`, padding: mobile ? 16 : 24, textAlign: "center" }}>
+                  <div style={{ fontSize: mobile ? 14 : 16, letterSpacing: 3, marginBottom: 8, opacity: 0.7 }}>BRIBED</div>
+                  <div style={{ fontSize: mobile ? 36 : 56, fontWeight: 800, fontFamily: `"${HEADING_FONT}", serif` }}>{bribedCount}</div>
+                  <div style={{ fontSize: mobile ? 14 : 18, marginTop: 4 }}>
+                    {((bribedCount / (bribedCount + unbribedCount)) * 100).toFixed(1)}% OF CITIZENS
+                  </div>
+                </div>
+                <div style={{ border: `3px solid ${fg}`, padding: mobile ? 16 : 24, textAlign: "center" }}>
+                  <div style={{ fontSize: mobile ? 14 : 16, letterSpacing: 3, marginBottom: 8, opacity: 0.7 }}>UNBRIBED</div>
+                  <div style={{ fontSize: mobile ? 36 : 56, fontWeight: 800, fontFamily: `"${HEADING_FONT}", serif` }}>{unbribedCount}</div>
+                  <div style={{ fontSize: mobile ? 14 : 18, marginTop: 4 }}>
+                    {((unbribedCount / (bribedCount + unbribedCount)) * 100).toFixed(1)}% OF CITIZENS
+                  </div>
+                </div>
+                <div style={{ border: `3px solid ${fg}`, padding: mobile ? 16 : 24, textAlign: "center" }}>
+                  <div style={{ fontSize: mobile ? 14 : 16, letterSpacing: 3, marginBottom: 8, opacity: 0.7 }}>REMAINING BRIBED</div>
+                  <div style={{ fontSize: mobile ? 36 : 56, fontWeight: 800, fontFamily: `"${HEADING_FONT}", serif` }}>
+                    {bribedCount - bribedElimCount}
+                  </div>
+                  <div style={{ fontSize: mobile ? 14 : 18, marginTop: 4 }}>
+                    STILL ALIVE WITH BRIBES
+                  </div>
+                </div>
+              </div>
+
+              {bribedElimCount > 0 && (
+                <div style={{
+                  border: `3px solid ${colors.error}`,
+                  padding: mobile ? 16 : 24,
+                  textAlign: "center",
+                  background: "rgba(139,26,26,0.08)",
+                }}>
+                  <div style={{ fontSize: mobile ? 20 : 32, fontWeight: 800, fontFamily: `"${HEADING_FONT}", serif`, color: colors.error }}>
+                    THE BRIBE DIDN'T HELP
+                  </div>
+                  <div style={{ fontSize: mobile ? 14 : 18, marginTop: 8, opacity: 0.8 }}>
+                    {bribedElimCount} BRIBED CITIZENS ELIMINATED ANYWAY
+                  </div>
+                  <div style={{ fontSize: mobile ? 12 : 16, marginTop: 4, opacity: 0.6 }}>
+                    {bribedCount > 0 ? ((bribedElimCount / bribedCount) * 100).toFixed(1) : "0.0"}% BRIBE FAILURE RATE
                   </div>
                 </div>
               )}

@@ -1,13 +1,17 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useTheme } from "./shared/theme";
+import {
+  CONTRACT,
+  EVADER_CONTRACT,
+  fetchTokenById as sharedFetchTokenById,
+  fetchEvaderById as sharedFetchEvaderById,
+  fetchOwnersForNFT,
+  reverseENS,
+} from "./shared/api";
+import { sR } from "./shared/utils";
 
 const HEADING_FONT = "Bajern";
 const BODY_FONT = "DeptBody";
-const CONTRACT = "0x4f249b2dc6cecbd549a0c354bbfc4919e8c5d3ae";
-const EVADER_CONTRACT = "0x075f90ff6b89a1c164fb352bebd0a16f55804ca2";
-const ALCHEMY_BASE = "https://eth-mainnet.g.alchemy.com/nft/v3/WgO0U6P7fqu1fJNQoDFos";
-const ALCHEMY_CORE = "https://eth-mainnet.g.alchemy.com/v2/WgO0U6P7fqu1fJNQoDFos";
-const ENS_REVERSE_RECORDS = "0x3671aE578E63FdF66ad4F3E12CC0c0d71Ac7510C";
 
 /* ═══════════════════════════════════════
    CSS KEYFRAMES (injected once)
@@ -41,92 +45,39 @@ function injectStyles() {
 /* ═══════════════════════════════════════
    API / DATA HELPERS
    ═══════════════════════════════════════ */
-async function fetchOwnerOf(contractAddress, tokenId) {
-  const url = `${ALCHEMY_BASE}/getOwnersForNFT?contractAddress=${contractAddress}&tokenId=${tokenId}`;
-  const res = await fetch(url);
-  if (!res.ok) return null;
-  const data = await res.json();
-  return data.owners?.[0] || null;
-}
-
-async function reverseENS(address) {
-  try {
-    const addr = address.toLowerCase().replace("0x", "");
-    const data = "0x4f9f6aa6" +
-      "0000000000000000000000000000000000000000000000000000000000000020" +
-      "0000000000000000000000000000000000000000000000000000000000000001" +
-      "000000000000000000000000" + addr;
-    const res = await fetch(ALCHEMY_CORE, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ jsonrpc: "2.0", method: "eth_call", params: [{ to: ENS_REVERSE_RECORDS, data }, "latest"], id: 1 }),
-    });
-    const json = await res.json();
-    if (!json.result || json.result === "0x" || json.result.length < 130) return null;
-    const hex = json.result.slice(2);
-    const arrOff = parseInt(hex.slice(0, 64), 16) * 2;
-    const firstOff = parseInt(hex.slice(arrOff + 64, arrOff + 128), 16) * 2;
-    const strStart = arrOff + 64 + firstOff;
-    const strLen = parseInt(hex.slice(strStart, strStart + 64), 16);
-    if (strLen === 0) return null;
-    const strHex = hex.slice(strStart + 64, strStart + 64 + strLen * 2);
-    const name = strHex.match(/.{2}/g).map(b => String.fromCharCode(parseInt(b, 16))).join("");
-    return name.endsWith(".eth") ? name : null;
-  } catch { return null; }
-}
-
 async function resolveOwner(contractAddress, tokenId) {
-  const addr = await fetchOwnerOf(contractAddress, tokenId);
-  if (!addr) return { address: null, ens: null };
-  const ens = await reverseENS(addr);
-  return { address: addr, ens };
-}
-
-function parseMeta(nft, isEvader = false) {
-  const attrs = {};
-  (nft.raw?.metadata?.attributes || []).forEach((a) => {
-    if (a.trait_type) attrs[a.trait_type.toLowerCase()] = a.value;
-  });
-  const tokenId = nft.tokenId || "0";
-  const image = nft.image?.cachedUrl || nft.image?.originalUrl || nft.image?.pngUrl || nft.raw?.metadata?.image || "";
-  return {
-    id: tokenId,
-    name: nft.name || nft.title || `${isEvader ? "Evader" : "Citizen"} #${tokenId}`,
-    image,
-    class: attrs.class || attrs.type || "UNKNOWN",
-    isEvader,
-  };
+  try {
+    const data = await fetchOwnersForNFT(contractAddress, tokenId);
+    const addr = data.owners?.[0] || null;
+    if (!addr) return { address: null, ens: null };
+    const ens = await reverseENS(addr);
+    return { address: addr, ens };
+  } catch {
+    return { address: null, ens: null };
+  }
 }
 
 async function fetchTokenById(tokenId) {
-  const url = `${ALCHEMY_BASE}/getNFTMetadata?contractAddress=${CONTRACT}&tokenId=${tokenId}`;
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(`API ${res.status}`);
-  const nft = await res.json();
-  if (!nft.tokenId && !nft.id?.tokenId) throw new Error("Token not found");
-  return parseMeta(nft, false);
+  const parsed = await sharedFetchTokenById(tokenId);
+  return { ...parsed, isEvader: false };
 }
 
 async function fetchEvaderById(tokenId) {
-  const url = `${ALCHEMY_BASE}/getNFTMetadata?contractAddress=${EVADER_CONTRACT}&tokenId=${tokenId}`;
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(`API ${res.status}`);
-  const nft = await res.json();
-  if (!nft.tokenId && !nft.id?.tokenId) throw new Error("Evader not found");
-  const evader = parseMeta(nft, true);
+  const evader = await sharedFetchEvaderById(tokenId);
 
   // Evader art is extremely dark — fetch the original citizen image for the same ID
   try {
-    const cUrl = `${ALCHEMY_BASE}/getNFTMetadata?contractAddress=${CONTRACT}&tokenId=${tokenId}`;
-    const cRes = await fetch(cUrl);
-    if (cRes.ok) {
-      const cNft = await cRes.json();
-      const cImg = cNft.image?.cachedUrl || cNft.image?.originalUrl || cNft.image?.pngUrl || cNft.raw?.metadata?.image || "";
-      if (cImg) evader.image = cImg;
-    }
+    const citizen = await sharedFetchTokenById(tokenId);
+    if (citizen.image) evader.image = citizen.image;
   } catch {}
 
-  return evader;
+  return {
+    id: evader.id,
+    name: evader.name,
+    image: evader.image,
+    class: evader.class,
+    isEvader: true,
+  };
 }
 
 async function fetchFighterWithRetry(rng) {
@@ -144,11 +95,6 @@ async function fetchFighterWithRetry(rng) {
   }
   try { return await fetchTokenById(1); } catch {}
   return null;
-}
-
-function sR(seed) {
-  let s = Math.abs(seed) || 1;
-  return () => { s = (s * 16807) % 2147483647; return (s - 1) / 2147483646; };
 }
 
 function getTimeLeft() {

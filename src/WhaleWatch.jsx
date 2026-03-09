@@ -1,11 +1,10 @@
 import { useState, useEffect, useRef } from "react";
 import { useTheme } from "./shared/theme";
 import { useSound } from "./shared/sound";
+import { CONTRACT, fetchOwnersForContract } from "./shared/api";
 
 const HEADING_FONT = "Bajern";
 const BODY_FONT = "DeptBody";
-const CONTRACT = "0x4f249b2dc6cecbd549a0c354bbfc4919e8c5d3ae";
-const ALCHEMY_BASE = "https://eth-mainnet.g.alchemy.com/nft/v3/WgO0U6P7fqu1fJNQoDFos";
 const LS_KEY = "dt_owners_cache";
 const FOUR_HOURS = 4 * 60 * 60 * 1000;
 
@@ -60,12 +59,10 @@ export default function WhaleWatch({ mobile }) {
         let pages = 0;
 
         do {
-          let url = `${ALCHEMY_BASE}/getOwnersForContract?contractAddress=${CONTRACT}&withTokenBalances=true`;
-          if (pageKey) url += `&pageKey=${pageKey}`;
-
-          const res = await fetch(url);
-          if (!res.ok) throw new Error(`API ${res.status}`);
-          const data = await res.json();
+          const data = await fetchOwnersForContract(CONTRACT, {
+            withTokenBalances: true,
+            pageKey: pageKey || undefined,
+          });
 
           (data.owners || []).forEach((o) => {
             const count = o.tokenBalances ? o.tokenBalances.length : 0;

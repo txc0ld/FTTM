@@ -1,10 +1,9 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useTheme } from "./shared/theme";
 import { useSound } from "./shared/sound";
+import { EVADER_CONTRACT, parseEvaderMeta as _parseEvaderMeta, fetchNFTsForContract } from "./shared/api";
 const HEADING_FONT = "Bajern";
 const BODY_FONT = "DeptBody";
-const EVADER_CONTRACT = "0x075f90ff6b89a1c164fb352bebd0a16f55804ca2";
-const ALCHEMY_BASE = "https://eth-mainnet.g.alchemy.com/nft/v3/WgO0U6P7fqu1fJNQoDFos";
 
 const LS_KEY = "dt_boneyard_cache";
 const TWELVE_HOURS = 12 * 60 * 60 * 1000;
@@ -22,38 +21,20 @@ function saveCache(tokens) {
 }
 
 function parseEvaderMeta(nft) {
-  const attrs = {};
-  const rawAttrs = nft.raw?.metadata?.attributes || [];
-  rawAttrs.forEach((a) => {
-    if (a.trait_type) attrs[a.trait_type.toLowerCase()] = a.value;
-  });
-  const tokenId = nft.tokenId || "0";
-  // Prefer IPFS original — Alchemy CDN strips backgrounds on grayscale evaders
-  const candidates = [
-    nft.image?.originalUrl,
-    nft.image?.cachedUrl,
-    nft.image?.pngUrl,
-    nft.image?.thumbnailUrl,
-    nft.raw?.metadata?.image,
-  ];
-  let image = candidates.find((u) => u && !u.startsWith("ipfs://")) || candidates.find((u) => u) || "";
+  const parsed = _parseEvaderMeta(nft);
   // Convert ipfs:// protocol to a gateway URL
-  if (image.startsWith("ipfs://")) image = image.replace("ipfs://", "https://ipfs.io/ipfs/");
-  // Capture mint timestamp from timeLastUpdated or mint block info
-  const mintTime = nft.mint?.timestamp || nft.timeLastUpdated || null;
-  const mintBlock = nft.mint?.blockNumber || null;
-  const mintTx = nft.mint?.transactionHash || null;
-  const mintAddress = nft.mint?.mintAddress || null;
-
+  if (parsed.image && parsed.image.startsWith("ipfs://"))
+    parsed.image = parsed.image.replace("ipfs://", "https://ipfs.io/ipfs/");
+  // Map shared field names to the ones this component uses
   return {
-    id: tokenId,
-    name: nft.name || nft.title || `Evader #${tokenId}`,
-    image,
-    allTraits: attrs,
-    mintTime,
-    mintBlock,
-    mintTx,
-    mintAddress,
+    id: parsed.id,
+    name: parsed.name,
+    image: parsed.image,
+    allTraits: parsed.allTraits,
+    mintTime: parsed.mintTimestamp,
+    mintBlock: parsed.blockNumber,
+    mintTx: parsed.transactionHash,
+    mintAddress: parsed.mintAddress,
   };
 }
 
@@ -63,12 +44,11 @@ async function fetchAllEvaders(onProgress) {
   let pages = 0;
 
   do {
-    let url = `${ALCHEMY_BASE}/getNFTsForContract?contractAddress=${EVADER_CONTRACT}&withMetadata=true&limit=100`;
-    if (pageKey) url += `&pageKey=${pageKey}`;
-
-    const res = await fetch(url);
-    if (!res.ok) throw new Error(`API ${res.status}`);
-    const data = await res.json();
+    const data = await fetchNFTsForContract(EVADER_CONTRACT, {
+      withMetadata: true,
+      limit: 100,
+      pageKey: pageKey || undefined,
+    });
     const nfts = (data.nfts || []).map(parseEvaderMeta);
     all = all.concat(nfts);
     pages++;

@@ -1,57 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { useTheme } from "./shared/theme";
+import { CONTRACT, fetchWalletNFTs } from "./shared/api";
 const HEADING_FONT = "Bajern";
 const BODY_FONT = "DeptBody";
-const CONTRACT = "0x4f249b2dc6cecbd549a0c354bbfc4919e8c5d3ae";
-const ALCHEMY_BASE = "https://eth-mainnet.g.alchemy.com/nft/v3/WgO0U6P7fqu1fJNQoDFos";
-
-function cyrb53(str, seed = 0) {
-  let h1 = 0xdeadbeef ^ seed, h2 = 0x41c6ce57 ^ seed;
-  for (let i = 0, ch; i < str.length; i++) {
-    ch = str.charCodeAt(i);
-    h1 = Math.imul(h1 ^ ch, 2654435761);
-    h2 = Math.imul(h2 ^ ch, 1597334677);
-  }
-  h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507) ^ Math.imul(h2 ^ (h2 >>> 13), 3266489909);
-  h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909);
-  return 4294967296 * (2097151 & h2) + (h1 >>> 0);
-}
-
-function parseMeta(nft) {
-  const attrs = {};
-  const rawAttrs = nft.raw?.metadata?.attributes || [];
-  rawAttrs.forEach((a) => {
-    if (a.trait_type) attrs[a.trait_type.toLowerCase()] = a.value;
-  });
-  const tokenId = nft.tokenId || "0";
-  const image = nft.image?.cachedUrl || nft.image?.originalUrl || nft.image?.pngUrl || nft.raw?.metadata?.image || "";
-  const auditHash = cyrb53(tokenId, 6969);
-  const taxHash = cyrb53(tokenId, 4200);
-  return {
-    id: tokenId,
-    name: nft.name || nft.title || `Citizen #${tokenId}`,
-    image,
-    class: attrs.class || attrs.type || "UNKNOWN",
-    inAudit: (auditHash % 100) < 5,
-    taxDue: (taxHash % 100) < 12,
-  };
-}
-
-async function fetchWalletNFTs(wallet) {
-  let allNfts = [];
-  let pageKey = null;
-  do {
-    let url = `${ALCHEMY_BASE}/getNFTsForOwner?owner=${wallet}&contractAddresses[]=${CONTRACT}&withMetadata=true&pageSize=100`;
-    if (pageKey) url += `&pageKey=${pageKey}`;
-    const res = await fetch(url);
-    if (!res.ok) throw new Error(`API ${res.status}`);
-    const data = await res.json();
-    const parsed = (data.ownedNfts || []).map(parseMeta);
-    allNfts = allNfts.concat(parsed);
-    pageKey = data.pageKey || null;
-  } while (pageKey);
-  return allNfts;
-}
 
 /* ═══════════════════════════════════════════════
    SESSION ENCODE/DECODE
