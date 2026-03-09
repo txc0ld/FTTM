@@ -11,7 +11,7 @@ import ShareCard from "./ShareCard";
 import { useTheme } from "./shared/theme";
 import { useSound } from "./shared/sound";
 import { loadImage } from "./shared/utils";
-import { fetchWalletNFTs, fetchWalletEvaders, fetchTokenById, fetchEvaderById, CONTRACT } from "./shared/api";
+import { fetchWalletNFTs, fetchWalletEvaders, fetchTokenById, fetchEvaderById, CONTRACT, EVADER_CONTRACT } from "./shared/api";
 import { W, H, HEADING_FONT as CANVAS_HEADING, BODY_FONT, loadAssets } from "./shared/canvas";
 import { TEMPLATES, RENDERERS, buildWastedGif } from "./templates";
 /* ═══════════════════════════════════════════════
@@ -84,6 +84,8 @@ export default function App() {
   // Grid template state
   const [gridSize, setGridSize] = useState(3);
   const [gridImages, setGridImages] = useState([]);
+  const [gridSlots, setGridSlots] = useState([]); // array of nft objects or null per slot
+  const [gridSelectedCell, setGridSelectedCell] = useState(null); // index of cell to fill
 
   const [menuOpen, setMenuOpen] = useState(false);
   const navTo = (v) => {
@@ -181,17 +183,29 @@ export default function App() {
     setGifPreviewUrl(null);
   }, [render]);
 
-  // Load grid images from owned NFTs (citizens + evaders already combined)
+  // Initialize grid slots when size changes or NFTs load
   useEffect(() => {
-    if (tpl !== "grid" || !ownedNFTs.length) { setGridImages([]); return; }
+    if (tpl !== "grid") return;
+    const needed = gridSize * gridSize;
+    // Auto-fill slots from ownedNFTs on first load or resize
+    const newSlots = [];
+    for (let i = 0; i < needed; i++) {
+      newSlots.push(i < ownedNFTs.length ? ownedNFTs[i] : null);
+    }
+    setGridSlots(newSlots);
+    setGridSelectedCell(null);
+  }, [tpl, gridSize, ownedNFTs]);
+
+  // Load images for grid slots
+  useEffect(() => {
+    if (tpl !== "grid" || !gridSlots.length) { setGridImages([]); return; }
     let cancelled = false;
     (async () => {
-      const needed = gridSize * gridSize;
       const loaded = [];
-      for (let i = 0; i < Math.min(needed, ownedNFTs.length); i++) {
+      for (let i = 0; i < gridSlots.length; i++) {
         if (cancelled) return;
-        const nft = ownedNFTs[i];
-        if (nft.image) {
+        const nft = gridSlots[i];
+        if (nft && nft.image) {
           try { loaded.push(await loadImage(nft.image)); } catch { loaded.push(null); }
         } else {
           loaded.push(null);
@@ -200,7 +214,7 @@ export default function App() {
       if (!cancelled) setGridImages(loaded);
     })();
     return () => { cancelled = true; };
-  }, [tpl, gridSize, ownedNFTs]);
+  }, [tpl, gridSlots]);
 
   // Auto-fetch evader image when citizen image loads (for WASTED template transition)
   // Evader names contain citizen ID; check Boneyard cache for image URL
@@ -1178,16 +1192,39 @@ export default function App() {
                   background: "transparent",
                 }}
               >
-                {ownedNFTs.map((nft) => (
+                {ownedNFTs.map((nft) => {
+                  const selected = cid === nft.id;
+                  const inGrid = tpl === "grid" && gridSlots.some(s => s && s.id === nft.id && s.isEvader === nft.isEvader);
+                  const osContract = nft.isEvader ? EVADER_CONTRACT : CONTRACT;
+                  return (
                   <div
-                    key={nft.id}
-                    onClick={() => selectNFT(nft)}
+                    key={`${nft.isEvader ? "e" : "c"}_${nft.id}`}
+                    onClick={() => {
+                      if (tpl === "grid" && gridSelectedCell !== null) {
+                        // Place NFT in selected grid cell
+                        const newSlots = [...gridSlots];
+                        newSlots[gridSelectedCell] = nft;
+                        setGridSlots(newSlots);
+                        setGridSelectedCell(null);
+                      } else if (tpl === "grid") {
+                        // Find first empty slot and fill it
+                        const emptyIdx = gridSlots.findIndex(s => !s);
+                        if (emptyIdx !== -1) {
+                          const newSlots = [...gridSlots];
+                          newSlots[emptyIdx] = nft;
+                          setGridSlots(newSlots);
+                        }
+                      } else {
+                        selectNFT(nft);
+                      }
+                    }}
                     style={{
                       cursor: "pointer",
-                      border: cid === nft.id ? `2px solid ${uiFg}` : `2px solid transparent`,
+                      border: selected ? `2px solid ${uiFg}` : gridSelectedCell !== null && tpl === "grid" ? `2px solid ${colors.error}` : `2px solid transparent`,
                       transition: "all 0.1s",
                       position: "relative",
-                      background: cid === nft.id ? uiFg : "transparent"
+                      background: selected ? uiFg : "transparent",
+                      opacity: inGrid ? 0.4 : 1,
                     }}
                   >
                     <img
@@ -1199,7 +1236,8 @@ export default function App() {
                         objectFit: "cover",
                         imageRendering: "pixelated",
                         display: "block",
-                        opacity: cid === nft.id ? 0.9 : 1
+                        opacity: selected ? 0.9 : 1,
+                        background: nft.isEvader ? "#000" : "transparent",
                       }}
                     />
                     {(nft.inAudit || nft.taxDue) && (
@@ -1208,9 +1246,14 @@ export default function App() {
                         {nft.taxDue && <div style={{ background: uiFg, color: uiBg, fontSize: 12, fontWeight: 700, padding: "3px 6px", lineHeight: 1.2 }}>TAX</div>}
                       </div>
                     )}
+                    {nft.isEvader && (
+                      <div style={{ position: "absolute", bottom: 38, left: 0, right: 0, background: "rgba(139,26,26,0.75)", color: "#fff", fontSize: 9, fontWeight: 800, textAlign: "center", padding: "2px 0", letterSpacing: 1 }}>
+                        EVADER
+                      </div>
+                    )}
                     <div style={{
                       marginTop: 4,
-                      color: cid === nft.id ? uiBg : uiFg,
+                      color: selected ? uiBg : uiFg,
                       background: "transparent",
                       textAlign: "center",
                       fontSize: 14,
@@ -1221,7 +1264,7 @@ export default function App() {
                       #{nft.id}
                     </div>
                     <a
-                      href={`https://opensea.io/assets/ethereum/${CONTRACT}/${nft.id}`}
+                      href={`https://opensea.io/assets/ethereum/${osContract}/${nft.id}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       onClick={(e) => e.stopPropagation()}
@@ -1230,7 +1273,7 @@ export default function App() {
                         textAlign: "center",
                         fontSize: 13,
                         fontWeight: 700,
-                        color: cid === nft.id ? uiBg : uiFg,
+                        color: selected ? uiBg : uiFg,
                         textDecoration: "none",
                         opacity: 0.6,
                         padding: "2px 0",
@@ -1239,7 +1282,8 @@ export default function App() {
                       OPENSEA
                     </a>
                   </div>
-                ))}
+                  );
+                })}
               </div>
             ) : (
               <>
@@ -1416,10 +1460,80 @@ export default function App() {
                   <div style={{ fontSize: 11, opacity: 0.6, marginTop: 6, fontFamily: `"${BODY_FONT}", monospace` }}>
                     CONNECT WALLET TO POPULATE GRID
                   </div>
-                ) : ownedNFTs.length > 0 && (
-                  <div style={{ fontSize: 11, opacity: 0.6, marginTop: 6, fontFamily: `"${BODY_FONT}", monospace` }}>
-                    {ownedNFTs.length} NFT{ownedNFTs.length !== 1 ? "S" : ""} AVAILABLE (CITIZENS + EVADERS)
-                  </div>
+                ) : (
+                  <>
+                    {ownedNFTs.length > 0 && (
+                      <div style={{ fontSize: 11, opacity: 0.6, marginTop: 6, fontFamily: `"${BODY_FONT}", monospace` }}>
+                        {ownedNFTs.length} NFT{ownedNFTs.length !== 1 ? "S" : ""} AVAILABLE
+                      </div>
+                    )}
+                    {/* Mini grid editor */}
+                    <div style={{ marginTop: 8 }}>
+                      <div style={{ fontSize: 10, opacity: 0.5, marginBottom: 4, fontFamily: `"${BODY_FONT}", monospace` }}>
+                        {gridSelectedCell !== null ? `SELECT NFT FOR CELL ${gridSelectedCell + 1}` : "TAP CELL TO EDIT"}
+                      </div>
+                      <div style={{
+                        display: "grid",
+                        gridTemplateColumns: `repeat(${gridSize}, 1fr)`,
+                        gap: 2,
+                        border: `1px solid ${uiFg}`,
+                        padding: 2,
+                      }}>
+                        {gridSlots.map((slot, i) => (
+                          <div
+                            key={i}
+                            onClick={() => {
+                              if (gridSelectedCell === i) {
+                                // Deselect
+                                setGridSelectedCell(null);
+                              } else if (slot && gridSelectedCell === null) {
+                                // Clear this cell or select it for swap
+                                setGridSelectedCell(i);
+                              } else if (gridSelectedCell !== null && slot) {
+                                // Swap cells
+                                const newSlots = [...gridSlots];
+                                const tmp = newSlots[i];
+                                newSlots[i] = newSlots[gridSelectedCell];
+                                newSlots[gridSelectedCell] = tmp;
+                                setGridSlots(newSlots);
+                                setGridSelectedCell(null);
+                              } else {
+                                setGridSelectedCell(i);
+                              }
+                            }}
+                            style={{
+                              aspectRatio: "1",
+                              background: gridSelectedCell === i ? colors.error : slot ? uiFg : `${uiFg}22`,
+                              cursor: "pointer",
+                              overflow: "hidden",
+                              border: gridSelectedCell === i ? `2px solid ${colors.error}` : "none",
+                            }}
+                          >
+                            {slot && slot.image && (
+                              <img src={slot.image} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block", imageRendering: "pixelated" }} />
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                      {gridSelectedCell !== null && (
+                        <button
+                          onClick={() => {
+                            const newSlots = [...gridSlots];
+                            newSlots[gridSelectedCell] = null;
+                            setGridSlots(newSlots);
+                            setGridSelectedCell(null);
+                          }}
+                          style={{
+                            marginTop: 4, width: "100%", background: colors.error, color: "#fff",
+                            border: "none", padding: "4px", fontSize: 11, fontWeight: 700, cursor: "pointer",
+                            fontFamily: `"${BODY_FONT}", monospace`,
+                          }}
+                        >
+                          CLEAR CELL
+                        </button>
+                      )}
+                    </div>
+                  </>
                 )}
               </div>
             )}

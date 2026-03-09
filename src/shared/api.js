@@ -139,10 +139,13 @@ export async function fetchWalletEvaders(wallet) {
 
   return allNfts.map((nft) => {
     const parsed = parseMeta(nft);
+    // Prefer IPFS original — Alchemy CDN strips backgrounds on grayscale evaders
+    const rawImg = nft.raw?.metadata?.image || "";
     const ipfsImage =
       nft.image?.originalUrl ||
-      (nft.raw?.metadata?.image || "").replace("ipfs://", "https://ipfs.io/ipfs/");
-    if (ipfsImage) parsed.image = ipfsImage;
+      (rawImg.startsWith("ipfs://") ? rawImg.replace("ipfs://", "https://ipfs.io/ipfs/") : null);
+    // Fallback: known IPFS CID pattern for evader images
+    parsed.image = ipfsImage || `https://ipfs.io/ipfs/QmPLLa1FwoyA3rDH3GuHZ3zgZWew6EUJcSDTztVCs17oii/citizen-${parsed.id}.png`;
     parsed.isEvader = true;
     return parsed;
   });

@@ -1538,10 +1538,6 @@ function drawGrid(ctx, _img, _id, _meta, _evaderImg, gridImages, gridSize) {
     ctx.drawImage(reaperImg, cw - iconW - pad, (headerH - iconH) / 2, iconW, iconH);
   }
 
-  // Divider line
-  ctx.fillStyle = BK;
-  ctx.fillRect(pad, headerH - 4, cw - pad * 2, 4);
-
   // Grid
   const gridTop = headerH + 8;
   const gridArea = cw;
