@@ -576,12 +576,13 @@ export default function Census({ mobile }) {
                           fontFamily: `"${BODY_FONT}", monospace`,
                         }}
                       >
-                        <div style={{ display: "flex", alignItems: "center", gap: mobile ? 8 : 16 }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: mobile ? 8 : 16, flexWrap: "wrap" }}>
                           <span style={{
                             fontWeight: 800,
                             opacity: 0.4,
                             width: mobile ? 28 : 36,
                             fontSize: mobile ? 12 : 14,
+                            flexShrink: 0,
                           }}>
                             {i + 1}
                           </span>
@@ -592,6 +593,16 @@ export default function Census({ mobile }) {
                             textTransform: "uppercase",
                           }}>
                             {h.class}
+                          </span>
+                          <span style={{
+                            fontSize: mobile ? 10 : 12,
+                            fontWeight: 800,
+                            padding: "1px 6px",
+                            background: h.status === "ALIVE" ? "#008800" : colors.error,
+                            color: "#fff",
+                            letterSpacing: 1,
+                          }}>
+                            {h.status || "ALIVE"}
                           </span>
                         </div>
                         <div style={{

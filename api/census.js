@@ -96,7 +96,15 @@ function aggregate(mainNfts, evaderNfts, bribeBalances) {
   let unbribedCount = 0;
   let bribedElimCount = 0;
 
-  const bribeHolders = []; // { id, name, class, bribes }
+  const bribeHolders = []; // { id, name, class, bribes, status }
+
+  // Build set of eliminated citizen IDs from evader names
+  const eliminatedIds = new Set();
+  evaderNfts.forEach((nft) => {
+    const name = nft.name || nft.raw?.metadata?.name || "";
+    const m = name.match(/(\d+)\s*$/);
+    if (m) eliminatedIds.add(m[1]);
+  });
 
   mainNfts.forEach((nft) => {
     const attrs = parseAttrs(nft);
@@ -112,7 +120,8 @@ function aggregate(mainNfts, evaderNfts, bribeBalances) {
     if (bal > 0) {
       bribedCount++;
       const name = nft.name || nft.raw?.metadata?.name || `Citizen #${tokenId}`;
-      bribeHolders.push({ id: tokenId, name, class: cls, bribes: bal });
+      const status = eliminatedIds.has(tokenId) ? "ELIMINATED" : "ALIVE";
+      bribeHolders.push({ id: tokenId, name, class: cls, bribes: bal, status });
     } else {
       unbribedCount++;
     }
@@ -123,9 +132,20 @@ function aggregate(mainNfts, evaderNfts, bribeBalances) {
     const cls = (attrs.class || attrs.type || "UNKNOWN").toUpperCase();
     classEliminated[cls] = (classEliminated[cls] || 0) + 1;
 
-    // Wealthy citizens start with bribes
-    const citizenClass = (attrs.class || attrs.type || "").toLowerCase();
-    if (citizenClass === "wealthy") bribedElimCount++;
+    // Check if evader still has bribe balance
+    const name = nft.name || nft.raw?.metadata?.name || "";
+    const m = name.match(/(\d+)\s*$/);
+    if (m) {
+      const citizenId = m[1];
+      const bal = bribeBalances[citizenId] || 0;
+      if (bal > 0) {
+        bribedElimCount++;
+        bribeHolders.push({ id: citizenId, name: `Citizen #${citizenId}`, class: cls, bribes: bal, status: "ELIMINATED" });
+      } else {
+        const citizenClass = (attrs.class || attrs.type || "").toLowerCase();
+        if (citizenClass === "wealthy") bribedElimCount++;
+      }
+    }
   });
 
   bribeHolders.sort((a, b) => b.bribes - a.bribes || parseInt(a.id) - parseInt(b.id));
