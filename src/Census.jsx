@@ -34,6 +34,7 @@ export default function Census({ mobile }) {
   const [unbribedCount, setUnbribedCount] = useState(0);
   const [bribedElimCount, setBribedElimCount] = useState(0);
   const [bribeHolders, setBribeHolders] = useState([]);
+  const [bribeFilter, setBribeFilter] = useState("ALL");
   const [loading, setLoading] = useState(false);
   const [progress, setProgress] = useState("");
   const [error, setError] = useState("");
@@ -550,20 +551,49 @@ export default function Census({ mobile }) {
               )}
 
               {/* BRIBE LEADERBOARD */}
-              {bribeHolders.length > 0 && (
+              {bribeHolders.length > 0 && (() => {
+                const filtered = bribeFilter === "ALL" ? bribeHolders
+                  : bribeHolders.filter(h => (h.status || "ALIVE") === bribeFilter);
+                return (
                 <div style={{ border: `3px solid ${fg}` }}>
                   <div style={{
                     background: fg, color: bg,
                     padding: mobile ? "10px 16px" : "12px 20px",
-                    fontSize: mobile ? 16 : 20,
-                    fontWeight: 800,
-                    fontFamily: `"${HEADING_FONT}", serif`,
-                    letterSpacing: 3,
+                    display: "flex", alignItems: "center", justifyContent: "space-between",
+                    flexWrap: "wrap", gap: 8,
                   }}>
-                    BRIBE HOLDERS — {bribeHolders.length} CITIZENS
+                    <span style={{
+                      fontSize: mobile ? 16 : 20,
+                      fontWeight: 800,
+                      fontFamily: `"${HEADING_FONT}", serif`,
+                      letterSpacing: 3,
+                    }}>
+                      BRIBE HOLDERS — {filtered.length}
+                    </span>
+                    <div style={{ display: "flex", gap: 4 }}>
+                      {["ALL", "ALIVE", "ELIMINATED"].map(f => (
+                        <button
+                          key={f}
+                          onClick={() => { setBribeFilter(f); playClick(); }}
+                          style={{
+                            background: bribeFilter === f ? bg : "transparent",
+                            color: bribeFilter === f ? fg : bg,
+                            border: `2px solid ${bg}`,
+                            padding: "2px 10px",
+                            fontSize: mobile ? 11 : 13,
+                            fontWeight: 800,
+                            cursor: "pointer",
+                            fontFamily: `"${BODY_FONT}", monospace`,
+                            letterSpacing: 1,
+                          }}
+                        >
+                          {f}
+                        </button>
+                      ))}
+                    </div>
                   </div>
                   <div style={{ maxHeight: 400, overflowY: "auto" }}>
-                    {bribeHolders.map((h, i) => (
+                    {filtered.map((h, i) => (
                       <div
                         key={h.id}
                         style={{
@@ -571,7 +601,7 @@ export default function Census({ mobile }) {
                           alignItems: "center",
                           justifyContent: "space-between",
                           padding: mobile ? "8px 12px" : "10px 20px",
-                          borderBottom: i < bribeHolders.length - 1 ? `1px solid ${fg}33` : "none",
+                          borderBottom: i < filtered.length - 1 ? `1px solid ${fg}33` : "none",
                           fontSize: mobile ? 14 : 16,
                           fontFamily: `"${BODY_FONT}", monospace`,
                         }}
@@ -620,7 +650,8 @@ export default function Census({ mobile }) {
                     ))}
                   </div>
                 </div>
-              )}
+                );
+              })()}
             </>
           )}
         </div>

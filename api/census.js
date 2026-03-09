@@ -92,20 +92,23 @@ function aggregate(mainNfts, evaderNfts, bribeBalances) {
   const classEliminated = {};
   let insuredCount = 0;
   let uninsuredCount = 0;
-  let bribedCount = 0;
-  let unbribedCount = 0;
-  let bribedElimCount = 0;
 
   const bribeHolders = []; // { id, name, class, bribes, status }
 
-  // Build set of eliminated citizen IDs from evader names
-  const eliminatedIds = new Set();
+  // Build lookup of eliminated citizen IDs + their class from evader names
+  const eliminatedMap = {}; // citizenId -> { class }
   evaderNfts.forEach((nft) => {
+    const attrs = parseAttrs(nft);
+    const cls = (attrs.class || attrs.type || "UNKNOWN").toUpperCase();
+    classEliminated[cls] = (classEliminated[cls] || 0) + 1;
+
     const name = nft.name || nft.raw?.metadata?.name || "";
     const m = name.match(/(\d+)\s*$/);
-    if (m) eliminatedIds.add(m[1]);
+    if (m) eliminatedMap[m[1]] = { class: cls };
   });
 
+  // Build lookup of living citizen data from main contract
+  const citizenMap = {}; // tokenId -> { name, class }
   mainNfts.forEach((nft) => {
     const attrs = parseAttrs(nft);
     const tokenId = nft.tokenId || "0";
@@ -116,37 +119,57 @@ function aggregate(mainNfts, evaderNfts, bribeBalances) {
     if (ins === "yes") insuredCount++;
     else uninsuredCount++;
 
-    const bal = bribeBalances[tokenId] || 0;
-    if (bal > 0) {
-      bribedCount++;
-      const name = nft.name || nft.raw?.metadata?.name || `Citizen #${tokenId}`;
-      const status = eliminatedIds.has(tokenId) ? "ELIMINATED" : "ALIVE";
-      bribeHolders.push({ id: tokenId, name, class: cls, bribes: bal, status });
+    const name = nft.name || nft.raw?.metadata?.name || `Citizen #${tokenId}`;
+    citizenMap[tokenId] = { name, class: cls };
+  });
+
+  // Count bribes from the actual on-chain data (source of truth)
+  let bribedCount = 0;
+  let unbribedCount = 0;
+  let bribedAlive = 0;
+  let bribedElimCount = 0;
+  const totalCitizens = Object.keys(citizenMap).length + Object.keys(eliminatedMap).length;
+
+  // Check every token ID that has a bribe balance
+  for (const [tid, bal] of Object.entries(bribeBalances)) {
+    if (bal <= 0) continue;
+    bribedCount++;
+
+    const isEliminated = !!eliminatedMap[tid];
+    const citizen = citizenMap[tid];
+    const evader = eliminatedMap[tid];
+
+    if (isEliminated) {
+      bribedElimCount++;
+      bribeHolders.push({
+        id: tid,
+        name: `Citizen #${tid}`,
+        class: evader?.class || "UNKNOWN",
+        bribes: bal,
+        status: "ELIMINATED",
+      });
+    } else if (citizen) {
+      bribedAlive++;
+      bribeHolders.push({
+        id: tid,
+        name: citizen.name,
+        class: citizen.class,
+        bribes: bal,
+        status: "ALIVE",
+      });
     } else {
-      unbribedCount++;
+      // Token exists in game contract but not in either NFT scrape
+      bribeHolders.push({
+        id: tid,
+        name: `Citizen #${tid}`,
+        class: "UNKNOWN",
+        bribes: bal,
+        status: "ALIVE",
+      });
     }
-  });
+  }
 
-  evaderNfts.forEach((nft) => {
-    const attrs = parseAttrs(nft);
-    const cls = (attrs.class || attrs.type || "UNKNOWN").toUpperCase();
-    classEliminated[cls] = (classEliminated[cls] || 0) + 1;
-
-    // Check if evader still has bribe balance
-    const name = nft.name || nft.raw?.metadata?.name || "";
-    const m = name.match(/(\d+)\s*$/);
-    if (m) {
-      const citizenId = m[1];
-      const bal = bribeBalances[citizenId] || 0;
-      if (bal > 0) {
-        bribedElimCount++;
-        bribeHolders.push({ id: citizenId, name: `Citizen #${citizenId}`, class: cls, bribes: bal, status: "ELIMINATED" });
-      } else {
-        const citizenClass = (attrs.class || attrs.type || "").toLowerCase();
-        if (citizenClass === "wealthy") bribedElimCount++;
-      }
-    }
-  });
+  unbribedCount = totalCitizens - bribedCount;
 
   bribeHolders.sort((a, b) => b.bribes - a.bribes || parseInt(a.id) - parseInt(b.id));
   return { classes, classEliminated, insuredCount, uninsuredCount, bribedCount, unbribedCount, bribedElimCount, bribeHolders };
