@@ -1530,14 +1530,6 @@ function drawGrid(ctx, _img, _id, _meta, _evaderImg, gridImages, gridSize) {
   ctx.font = `bold 90px "${HEADING_FONT}", serif`;
   ctx.fillText("DEATH AND TAXES", cw / 2, headerH / 2);
 
-  // Reaper icon — top right
-  if (reaperImg) {
-    const iconH = 90;
-    const aspect = reaperImg.width / reaperImg.height;
-    const iconW = iconH * aspect;
-    ctx.drawImage(reaperImg, cw - iconW - pad, (headerH - iconH) / 2, iconW, iconH);
-  }
-
   // Grid
   const gridTop = headerH + 8;
   const outerPad = 24;
@@ -1579,6 +1571,16 @@ function drawGrid(ctx, _img, _id, _meta, _evaderImg, gridImages, gridSize) {
         ctx.fillRect(x, y, cellSize, cellSize);
       }
     }
+  }
+
+  // Reaper icon — bottom center, below the grid
+  if (reaperImg) {
+    const gridBottom = gridTop + outerPad + n * cellSize + (n - 1) * gap;
+    const spaceBelow = ch - gridBottom;
+    const iconH = Math.min(70, spaceBelow - 8);
+    const aspect = reaperImg.width / reaperImg.height;
+    const iconW = iconH * aspect;
+    ctx.drawImage(reaperImg, (cw - iconW) / 2, gridBottom + (spaceBelow - iconH) / 2, iconW, iconH);
   }
 }
 
