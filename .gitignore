@@ -16,3 +16,8 @@ preview.html
 dept.html
 dod.html
 death-taxes-art.jsx
+
+.env*.local
+
+# Claude Code
+.claude/settings.local.json

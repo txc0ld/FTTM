@@ -1,0 +1,38 @@
+# Dependencies
+node_modules/
+vendor/
+.venv/
+__pycache__/
+
+# Build output
+dist/
+build/
+out/
+.next/
+coverage/
+
+# Environment & secrets
+.env
+.env.*
+*.pem
+*.key
+
+# Lock files (large, low signal)
+package-lock.json
+pnpm-lock.yaml
+yarn.lock
+Pipfile.lock
+poetry.lock
+
+# IDE & OS
+.idea/
+.vscode/
+*.swp
+.DS_Store
+Thumbs.db
+
+# Artifacts
+*.log
+*.map
+*.min.js
+*.min.css
