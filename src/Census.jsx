@@ -25,6 +25,7 @@ export default function Census({ mobile }) {
   const { colors } = useTheme();
   const { playClick, playStaticBuzz } = useSound();
   const [contractMeta, setContractMeta] = useState(null);
+  const [evaderMeta, setEvaderMeta] = useState(null);
   const [classes, setClasses] = useState(null);
   const [classEliminated, setClassEliminated] = useState({});
   const [insuredCount, setInsuredCount] = useState(0);
@@ -66,8 +67,12 @@ export default function Census({ mobile }) {
 
   const fetchContractMetaData = async () => {
     try {
-      const data = await apiFetchContractMeta(CONTRACT);
-      setContractMeta(data);
+      const [main, evader] = await Promise.all([
+        apiFetchContractMeta(CONTRACT),
+        apiFetchContractMeta(EVADER_CONTRACT),
+      ]);
+      setContractMeta(main);
+      setEvaderMeta(evader);
     } catch {}
   };
 
@@ -231,7 +236,9 @@ export default function Census({ mobile }) {
     });
   };
 
-  const elimTotal = Object.values(classEliminated).reduce((s, v) => s + v, 0);
+  const elimFromCensus = Object.values(classEliminated).reduce((s, v) => s + v, 0);
+  const evaderSupply = evaderMeta?.totalSupply || evaderMeta?.openSeaMetadata?.totalSupply || null;
+  const elimTotal = evaderSupply ? parseInt(evaderSupply) : elimFromCensus || 0;
   const livingSupply = contractMeta?.totalSupply || contractMeta?.openSeaMetadata?.totalSupply || "?";
   const totalSupply = livingSupply !== "?" && elimTotal ? parseInt(livingSupply) + elimTotal : livingSupply;
   const floorPrice = contractMeta?.openSeaMetadata?.floorPrice || "?";
