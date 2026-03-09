@@ -2,6 +2,9 @@
   "functions": {
     "api/census.js": {
       "maxDuration": 60
+    },
+    "api/wallet-nfts.js": {
+      "maxDuration": 30
     }
   },
   "rewrites": [

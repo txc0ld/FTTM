@@ -5,15 +5,10 @@ const OS_EVADER_SLUG = "evaders";
 
 async function resolveAddress(wallet) {
   if (wallet.startsWith("0x")) return wallet;
-  // Resolve ENS via Alchemy RPC
-  const key = process.env.ALCHEMY_API_KEY;
-  const rpcUrl = key
-    ? `https://eth-mainnet.g.alchemy.com/v3/${key}`
-    : "https://eth.llamarpc.com";
-  const provider = new JsonRpcProvider(rpcUrl);
-  const resolved = await provider.resolveName(wallet);
-  if (!resolved) throw new Error(`Could not resolve ENS name: ${wallet}`);
-  return resolved;
+  const provider = new JsonRpcProvider("https://eth.llamarpc.com");
+  const addr = await provider.resolveName(wallet);
+  if (!addr) throw new Error(`Could not resolve ENS name: ${wallet}`);
+  return addr;
 }
 
 async function fetchOSNfts(wallet, slug, osKey) {
@@ -56,7 +51,6 @@ export default async function handler(req, res) {
   if (!walletParam) return res.status(400).json({ error: "wallet parameter required" });
 
   try {
-    // Resolve ENS names to hex addresses — OpenSea requires 0x addresses
     const wallet = await resolveAddress(walletParam);
 
     const [citizenResult, evaderResult] = await Promise.allSettled([
