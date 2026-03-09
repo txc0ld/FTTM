@@ -1532,7 +1532,7 @@ function drawGrid(ctx, _img, _id, _meta, _evaderImg, gridImages, gridSize) {
 
   // Grid
   const gridTop = headerH + 8;
-  const outerPad = 24;
+  const outerPad = 48;
   const gridArea = cw - outerPad * 2;
   const gap = Math.max(2, Math.round(4 / (n / 3)));
   const totalGap = gap * (n - 1);

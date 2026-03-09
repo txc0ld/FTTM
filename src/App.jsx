@@ -1528,10 +1528,10 @@ export default function App() {
               >
                 <div style={{
                   position: "absolute",
-                  top: `${(148 + 24) / 1278 * 100}%`,
-                  left: `${24 / 1080 * 100}%`,
-                  right: `${24 / 1080 * 100}%`,
-                  bottom: `${24 / 1278 * 100}%`,
+                  top: `${(148 + 48) / 1278 * 100}%`,
+                  left: `${48 / 1080 * 100}%`,
+                  right: `${48 / 1080 * 100}%`,
+                  bottom: `${48 / 1278 * 100}%`,
                   display: "grid",
                   gridTemplateColumns: `repeat(${gridSize}, 1fr)`,
                   gridTemplateRows: `repeat(${gridSize}, 1fr)`,
