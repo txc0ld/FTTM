@@ -1594,7 +1594,7 @@ function drawGrid(ctx, _img, _id, _meta, _evaderImg, gridImages, gridSize) {
 
   // "© 2026 ALL RIGHTS RESERVED" — bottom right
   ctx.textAlign = "right";
-  ctx.fillText("\u00A9 2026 ALL RIGHTS RESERVED", cw - outerPad, footerMid);
+  ctx.fillText("\u00A92026 ALL RIGHTS RESERVED", cw - outerPad, footerMid);
 }
 
 /* ═══════════════════════════════════════════════
