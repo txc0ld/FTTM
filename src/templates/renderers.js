@@ -1573,16 +1573,17 @@ function drawGrid(ctx, _img, _id, _meta, _evaderImg, gridImages, gridSize) {
     }
   }
 
-  // Footer area — below grid
+  // Footer area — below grid with padding
   const gridBottom = gridTop + outerPad + n * cellSize + (n - 1) * gap;
-  const footerMid = gridBottom + (ch - gridBottom) / 2;
+  const footerTop = gridBottom + 16;
+  const footerMid = footerTop + (ch - footerTop) / 2;
 
   // Reaper icon — bottom center
   if (reaperImg) {
-    const iconH = Math.min(70, ch - gridBottom - 8);
+    const iconH = Math.min(70, ch - footerTop - 8);
     const aspect = reaperImg.width / reaperImg.height;
     const iconW = iconH * aspect;
-    ctx.drawImage(reaperImg, (cw - iconW) / 2, gridBottom + (ch - gridBottom - iconH) / 2, iconW, iconH);
+    ctx.drawImage(reaperImg, (cw - iconW) / 2, footerTop + (ch - footerTop - iconH) / 2, iconW, iconH);
   }
 
   // "DEPT OF DEATH" — bottom left
