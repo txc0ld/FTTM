@@ -636,18 +636,24 @@ export default function KillFeed({ mobile }) {
                       {Math.abs(c.daysRemaining)}d OVERDUE{c.killable ? " — AUDIT EXPIRED" : c.auditDue ? " — AUDIT PENDING" : " — NO AUDIT YET"}
                     </div>
                   </div>
-                  <div style={{
-                    background: c.killable ? "#ff0000" : "#cc0000",
-                    color: "#fff",
-                    padding: mobile ? "4px 8px" : "6px 12px",
-                    fontSize: mobile ? 10 : 12,
-                    fontWeight: 700,
-                    fontFamily: `"${BODY_FONT}", monospace`,
-                    letterSpacing: 1,
-                    flexShrink: 0,
-                  }}>
+                  <a
+                    href={`https://www.deptofdeath.xyz/directory/${c.tokenId}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                      background: c.killable ? "#ff0000" : "#cc0000",
+                      color: "#fff",
+                      padding: mobile ? "4px 8px" : "6px 12px",
+                      fontSize: mobile ? 10 : 12,
+                      fontWeight: 700,
+                      fontFamily: `"${BODY_FONT}", monospace`,
+                      letterSpacing: 1,
+                      flexShrink: 0,
+                      textDecoration: "none",
+                      cursor: "pointer",
+                    }}>
                     {c.killable ? "KILLABLE" : "DELINQUENT"}
-                  </div>
+                  </a>
                 </div>
               ))}
             </div>
