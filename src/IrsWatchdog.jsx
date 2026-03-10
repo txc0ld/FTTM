@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useTheme } from "./shared/theme";
 import { CONTRACT, fetchNFTsForContract } from "./shared/api";
 import { cyrb53 } from "./shared/utils";
@@ -9,6 +9,39 @@ export default function IrsWatchdog({ mobile, ownedNFTs, selectNFT, setView, wal
   const [isScraping, setIsScraping] = useState(false);
   const [globalAudited, setGlobalAudited] = useState([]);
   const [pagesScraped, setPagesScraped] = useState(0);
+  const [taxData, setTaxData] = useState(null);
+  const [taxLoading, setTaxLoading] = useState(false);
+
+  // Fetch on-chain tax status for wallet citizens
+  const fetchTaxStatus = useCallback(async (nfts) => {
+    if (!nfts || nfts.length === 0) return;
+    // Only fetch for non-evader citizens
+    const citizens = nfts.filter((n) => !n.isEvader);
+    if (citizens.length === 0) return;
+    setTaxLoading(true);
+    try {
+      const tokenIds = citizens.map((n) => parseInt(n.id));
+      const res = await fetch("/api/tax-status", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ tokenIds }),
+      });
+      if (!res.ok) return;
+      const data = await res.json();
+      const nowSec = Math.floor(Date.now() / 1000);
+      const map = {};
+      for (const c of data.citizens) {
+        const killable = c.status === "DELINQUENT" && c.auditDue && c.auditDue <= nowSec;
+        map[c.tokenId] = { ...c, killable };
+      }
+      setTaxData(map);
+    } catch {}
+    setTaxLoading(false);
+  }, []);
+
+  useEffect(() => {
+    if (ownedNFTs && ownedNFTs.length > 0) fetchTaxStatus(ownedNFTs);
+  }, [ownedNFTs, fetchTaxStatus]);
 
   const sorted = [...(ownedNFTs || [])].sort((a, b) => {
     if (sortBy === "id_asc") return parseInt(a.id) - parseInt(b.id);
@@ -136,8 +169,16 @@ export default function IrsWatchdog({ mobile, ownedNFTs, selectNFT, setView, wal
         <div style={{ fontSize: mobile ? 16 : 22, fontWeight: 500, marginTop: 12 }}>
           {sorted.length} LOCALLY IMPORTED CITIZENS
         </div>
-        {sorted.length > 0 && (sorted.some(n => n.inAudit) || sorted.some(n => n.taxDue)) && (
+        {sorted.length > 0 && (
           <div style={{ display: "flex", gap: 12, marginTop: 10, flexWrap: "wrap", fontSize: 16, fontWeight: 700 }}>
+            {taxData && (() => {
+              const killableCount = sorted.filter(n => taxData[n.id]?.killable).length;
+              return killableCount > 0 ? (
+                <span style={{ background: "#ff0000", color: "#fff", padding: "4px 10px" }}>
+                  {killableCount} KILLABLE
+                </span>
+              ) : null;
+            })()}
             {sorted.filter(n => n.inAudit).length > 0 && (
               <span style={{ background: colors.error, color: "#fff", padding: "4px 10px" }}>
                 {sorted.filter(n => n.inAudit).length} IN AUDIT
@@ -153,6 +194,7 @@ export default function IrsWatchdog({ mobile, ownedNFTs, selectNFT, setView, wal
                 {sorted.filter(n => !n.inAudit && !n.taxDue).length} CLEAR
               </span>
             )}
+            {taxLoading && <span style={{ opacity: 0.5, padding: "4px 10px" }}>CHECKING ON-CHAIN...</span>}
           </div>
         )}
       </div>
@@ -306,12 +348,17 @@ export default function IrsWatchdog({ mobile, ownedNFTs, selectNFT, setView, wal
                     #{nft.id}
                   </div>
                 )}
-                {(nft.inAudit || nft.taxDue) && (
-                  <div style={{ position: "absolute", top: 4, right: 4, display: "flex", flexDirection: "column", gap: 2 }}>
-                    {nft.inAudit && <div style={{ background: colors.error, color: "#fff", fontSize: 14, fontWeight: 700, padding: "4px 8px", lineHeight: 1.2 }}>AUDIT</div>}
-                    {nft.taxDue && <div style={{ background: BK, color: BG, fontSize: 14, fontWeight: 700, padding: "4px 8px", lineHeight: 1.2 }}>TAX DUE</div>}
-                  </div>
-                )}
+                {(() => {
+                  const tax = taxData?.[nft.id];
+                  const killable = tax?.killable;
+                  return (killable || nft.inAudit || nft.taxDue) ? (
+                    <div style={{ position: "absolute", top: 4, right: 4, display: "flex", flexDirection: "column", gap: 2 }}>
+                      {killable && <div style={{ background: "#ff0000", color: "#fff", fontSize: 14, fontWeight: 700, padding: "4px 8px", lineHeight: 1.2 }}>KILLABLE</div>}
+                      {!killable && nft.inAudit && <div style={{ background: colors.error, color: "#fff", fontSize: 14, fontWeight: 700, padding: "4px 8px", lineHeight: 1.2 }}>AUDIT</div>}
+                      {nft.taxDue && <div style={{ background: BK, color: BG, fontSize: 14, fontWeight: 700, padding: "4px 8px", lineHeight: 1.2 }}>TAX DUE</div>}
+                    </div>
+                  ) : null;
+                })()}
                 <div style={{ textAlign: "center", display: "flex", flexDirection: "column", gap: 4 }}>
                   <div style={{ fontSize: mobile ? 18 : 24, fontWeight: 800, fontFamily: '"Bajern", serif' }}>
                     #{nft.id}
@@ -319,16 +366,26 @@ export default function IrsWatchdog({ mobile, ownedNFTs, selectNFT, setView, wal
                   <div style={{ fontSize: mobile ? 14 : 16, fontWeight: 600, textTransform: "uppercase" }}>
                     {nft.class !== "UNKNOWN" ? nft.class : "UNKNOWN"}
                   </div>
-                  <div style={{
-                    fontSize: 14,
-                    fontWeight: 700,
-                    padding: "4px 0",
-                    background: nft.inAudit ? colors.error : nft.taxDue ? BK : "transparent",
-                    color: nft.inAudit ? "#fff" : nft.taxDue ? BG : BK,
-                    border: !nft.inAudit && !nft.taxDue ? `1px solid ${BK}` : "none",
-                  }}>
-                    {nft.inAudit ? "IN AUDIT" : nft.taxDue ? "TAX DUE" : "CLEAR"}
-                  </div>
+                  {(() => {
+                    const tax = taxData?.[nft.id];
+                    const killable = tax?.killable;
+                    const delinquent = tax?.status === "DELINQUENT";
+                    const label = killable ? "KILLABLE" : delinquent ? "DELINQUENT" : nft.inAudit ? "IN AUDIT" : nft.taxDue ? "TAX DUE" : "CLEAR";
+                    const bg = killable ? "#ff0000" : delinquent ? "#cc0000" : nft.inAudit ? colors.error : nft.taxDue ? BK : "transparent";
+                    const fg = killable || delinquent ? "#fff" : nft.inAudit ? "#fff" : nft.taxDue ? BG : BK;
+                    return (
+                      <div style={{
+                        fontSize: 14,
+                        fontWeight: 700,
+                        padding: "4px 0",
+                        background: bg,
+                        color: fg,
+                        border: bg === "transparent" ? `1px solid ${BK}` : "none",
+                      }}>
+                        {label}
+                      </div>
+                    );
+                  })()}
                   <a
                     href={`https://opensea.io/assets/ethereum/${CONTRACT}/${nft.id}`}
                     target="_blank"
