@@ -76,6 +76,11 @@ export default async function handler(req, res) {
     const wallet = (req.query.wallet || "").toLowerCase();
     if (!wallet) return res.status(400).json({ error: "wallet required" });
 
+    // Treasury wallet always has access
+    if (wallet === TREASURY.toLowerCase()) {
+      return res.status(200).json({ hasAccess: true });
+    }
+
     const rows = await sql`
       SELECT wallet, paid_at FROM killable_access WHERE wallet = ${wallet}
     `;

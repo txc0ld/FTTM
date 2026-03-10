@@ -36,13 +36,13 @@ function saveCache(data) {
   localStorage.setItem(KILL_CACHE_KEY, JSON.stringify({ ts: Date.now(), data }));
 }
 
-export default function KillFeed({ mobile }) {
+export default function KillFeed({ mobile, defaultTab }) {
   const { colors } = useTheme();
   const { playClick, playStaticBuzz } = useSound();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [tab, setTab] = useState("KILLS");
+  const [tab, setTab] = useState(defaultTab || "KILLS");
   const [viewMode, setViewMode] = useState("LEADERBOARD");
   const [paused, setPaused] = useState(false);
   const [killable, setKillable] = useState([]);
@@ -104,7 +104,7 @@ export default function KillFeed({ mobile }) {
 
   const connectAndCheckAccess = async () => {
     if (!window.ethereum) {
-      setPayError("INSTALL METAMASK");
+      setPayError("OPEN THIS SITE IN METAMASK BROWSER");
       return;
     }
     setAccessLoading(true);
@@ -680,18 +680,34 @@ export default function KillFeed({ mobile }) {
           </div>
 
           {!killWallet ? (
-            <button
-              onClick={connectAndCheckAccess}
-              disabled={accessLoading}
-              style={{
-                background: fg, color: bg, border: "none",
-                padding: "14px 32px", fontSize: mobile ? 16 : 20, fontWeight: 700,
-                fontFamily: `"${HEADING_FONT}", monospace`, cursor: "pointer",
-                letterSpacing: 1,
-              }}
-            >
-              {accessLoading ? "CONNECTING..." : "CONNECT WALLET"}
-            </button>
+            <div style={{ display: "flex", flexDirection: "column", gap: 12, alignItems: "center" }}>
+              {window.ethereum ? (
+                <button
+                  onClick={connectAndCheckAccess}
+                  disabled={accessLoading}
+                  style={{
+                    background: fg, color: bg, border: "none",
+                    padding: "14px 32px", fontSize: mobile ? 16 : 20, fontWeight: 700,
+                    fontFamily: `"${HEADING_FONT}", monospace`, cursor: "pointer",
+                    letterSpacing: 1,
+                  }}
+                >
+                  {accessLoading ? "CONNECTING..." : "CONNECT WALLET"}
+                </button>
+              ) : (
+                <a
+                  href={`https://metamask.app.link/dapp/${window.location.host}/killfeed`}
+                  style={{
+                    background: fg, color: bg, border: "none",
+                    padding: "14px 32px", fontSize: mobile ? 16 : 20, fontWeight: 700,
+                    fontFamily: `"${HEADING_FONT}", monospace`, cursor: "pointer",
+                    letterSpacing: 1, textDecoration: "none", display: "inline-block",
+                  }}
+                >
+                  OPEN IN METAMASK
+                </a>
+              )}
+            </div>
           ) : (
             <button
               onClick={payForAccess}

@@ -5,7 +5,6 @@ const BODY_FONT = "DeptBody";
 const HEADING_FONT = "Bajern";
 
 const STATUS_COLORS = {
-  KILLABLE: "#ff0000",
   DELINQUENT: "#ff0000",
   DUE_TODAY: "#ff6600",
   WARNING: "#cc8800",
@@ -13,7 +12,6 @@ const STATUS_COLORS = {
 };
 
 const STATUS_LABELS = {
-  KILLABLE: "KILLABLE",
   DELINQUENT: "DELINQUENT",
   DUE_TODAY: "DUE TODAY",
   WARNING: "LOW",
@@ -46,14 +44,10 @@ export default function TaxTracker({ mobile, wallet, setWallet, ownedNFTs, handl
       }
       const data = await res.json();
       // Merge NFT metadata with tax data
-      const nowSec = Math.floor(Date.now() / 1000);
       const merged = data.citizens.map((c) => {
         const nft = nfts.find((n) => String(n.id) === c.tokenId);
-        // Killable = delinquent + audit timer expired
-        const killable = c.status === "DELINQUENT" && c.auditDue && c.auditDue <= nowSec;
         return {
           ...c,
-          status: killable ? "KILLABLE" : c.status,
           name: nft?.name || `Citizen #${c.tokenId}`,
           image: nft?.image || "",
           class: nft?.class || "",
@@ -76,7 +70,7 @@ export default function TaxTracker({ mobile, wallet, setWallet, ownedNFTs, handl
   const sorted = taxData?.citizens
     ? [...taxData.citizens].sort((a, b) => {
         if (sortBy === "status") {
-          const order = { KILLABLE: 0, DELINQUENT: 1, DUE_TODAY: 2, WARNING: 3, CURRENT: 4 };
+          const order = { DELINQUENT: 0, DUE_TODAY: 1, WARNING: 2, CURRENT: 3 };
           return (order[a.status] ?? 4) - (order[b.status] ?? 4) || a.daysRemaining - b.daysRemaining;
         }
         if (sortBy === "id") return parseInt(a.tokenId) - parseInt(b.tokenId);
@@ -88,7 +82,6 @@ export default function TaxTracker({ mobile, wallet, setWallet, ownedNFTs, handl
   const summary = taxData?.citizens
     ? {
         total: taxData.citizens.length,
-        killable: taxData.citizens.filter((c) => c.status === "KILLABLE").length,
         delinquent: taxData.citizens.filter((c) => c.status === "DELINQUENT").length,
         dueToday: taxData.citizens.filter((c) => c.status === "DUE_TODAY").length,
         warning: taxData.citizens.filter((c) => c.status === "WARNING").length,
@@ -216,13 +209,12 @@ export default function TaxTracker({ mobile, wallet, setWallet, ownedNFTs, handl
             style={{
               ...S.card,
               display: "grid",
-              gridTemplateColumns: mobile ? "repeat(2, 1fr)" : "repeat(5, 1fr)",
+              gridTemplateColumns: mobile ? "repeat(2, 1fr)" : "repeat(4, 1fr)",
               gap: 0,
             }}
           >
             <SummaryCell label="TOTAL" value={summary.total} />
-            <SummaryCell label="KILLABLE" value={summary.killable} color="#ff0000" />
-            <SummaryCell label="DELINQUENT" value={summary.delinquent} color="#cc0000" />
+            <SummaryCell label="DELINQUENT" value={summary.delinquent} color="#ff0000" />
             <SummaryCell label="DUE TODAY" value={summary.dueToday} color="#ff6600" />
             <SummaryCell label="CURRENT" value={summary.current} color="#008800" />
           </div>
@@ -301,9 +293,7 @@ function CitizenRow({ citizen, mobile }) {
   const statusLabel = STATUS_LABELS[c.status] || c.status;
 
   const daysText =
-    c.status === "KILLABLE"
-      ? `${Math.abs(c.daysRemaining)}d OVERDUE — AUDIT EXPIRED`
-      : c.daysRemaining < 0
+    c.daysRemaining < 0
       ? `${Math.abs(c.daysRemaining)}d OVERDUE`
       : c.daysRemaining === 0
       ? "DUE NOW"

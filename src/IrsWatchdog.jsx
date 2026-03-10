@@ -1,21 +1,30 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useTheme } from "./shared/theme";
-import { CONTRACT, fetchNFTsForContract } from "./shared/api";
-import { cyrb53 } from "./shared/utils";
+import { CONTRACT } from "./shared/api";
+
+const SCAN_CACHE_KEY = "dt_watchdog_scan";
+const FIVE_MIN = 5 * 60 * 1000;
 
 export default function IrsWatchdog({ mobile, ownedNFTs, selectNFT, setView, wallet, setWallet, handleWalletFetch, loading, error }) {
   const { colors } = useTheme();
   const [sortBy, setSortBy] = useState("id_asc");
-  const [isScraping, setIsScraping] = useState(false);
-  const [globalAudited, setGlobalAudited] = useState([]);
-  const [pagesScraped, setPagesScraped] = useState(0);
+  const [scanning, setScanning] = useState(false);
+  const [scanData, setScanData] = useState(null);
+  const [scanError, setScanError] = useState("");
   const [taxData, setTaxData] = useState(null);
   const [taxLoading, setTaxLoading] = useState(false);
 
-  // Fetch on-chain tax status for wallet citizens
+  // Load cached scan on mount
+  useEffect(() => {
+    try {
+      const raw = JSON.parse(localStorage.getItem(SCAN_CACHE_KEY));
+      if (raw && raw.ts && Date.now() - raw.ts < FIVE_MIN) setScanData(raw.data);
+    } catch {}
+  }, []);
+
+  // Fetch real on-chain tax status for wallet citizens
   const fetchTaxStatus = useCallback(async (nfts) => {
     if (!nfts || nfts.length === 0) return;
-    // Only fetch for non-evader citizens
     const citizens = nfts.filter((n) => !n.isEvader);
     if (citizens.length === 0) return;
     setTaxLoading(true);
@@ -28,11 +37,9 @@ export default function IrsWatchdog({ mobile, ownedNFTs, selectNFT, setView, wal
       });
       if (!res.ok) return;
       const data = await res.json();
-      const nowSec = Math.floor(Date.now() / 1000);
       const map = {};
       for (const c of data.citizens) {
-        const killable = c.status === "DELINQUENT" && c.auditDue && c.auditDue <= nowSec;
-        map[c.tokenId] = { ...c, killable };
+        map[c.tokenId] = c;
       }
       setTaxData(map);
     } catch {}
@@ -43,74 +50,59 @@ export default function IrsWatchdog({ mobile, ownedNFTs, selectNFT, setView, wal
     if (ownedNFTs && ownedNFTs.length > 0) fetchTaxStatus(ownedNFTs);
   }, [ownedNFTs, fetchTaxStatus]);
 
+  // Global scan using Multicall3 endpoint
+  const runScan = async () => {
+    setScanning(true);
+    setScanError("");
+    try {
+      const res = await fetch("/api/killable-scan");
+      if (!res.ok) throw new Error(`Scan failed: ${res.status}`);
+      const data = await res.json();
+      setScanData(data);
+      localStorage.setItem(SCAN_CACHE_KEY, JSON.stringify({ ts: Date.now(), data }));
+    } catch (e) {
+      setScanError(e.message || "Scan failed");
+    }
+    setScanning(false);
+  };
+
   const sorted = [...(ownedNFTs || [])].sort((a, b) => {
     if (sortBy === "id_asc") return parseInt(a.id) - parseInt(b.id);
     if (sortBy === "id_desc") return parseInt(b.id) - parseInt(a.id);
     if (sortBy === "class") return a.class.localeCompare(b.class);
     if (sortBy === "status") {
-      const rank = (n) => n.inAudit ? 0 : n.taxDue ? 1 : 2;
+      const rank = (n) => {
+        const tax = taxData?.[n.id];
+        if (tax?.status === "DELINQUENT") return 0;
+        if (tax?.status === "DUE_TODAY") return 1;
+        if (tax?.status === "WARNING") return 2;
+        if (n.inAudit) return 0;
+        if (n.taxDue) return 1;
+        return 3;
+      };
       return rank(a) - rank(b);
     }
     return 0;
   });
 
-  const scrapeContract = async () => {
-    setIsScraping(true);
-    setPagesScraped(0);
-    let pageKey = "";
-    const foundAlerts = [];
-
-    try {
-      while (true) {
-        const data = await fetchNFTsForContract(CONTRACT, {
-          withMetadata: true,
-          limit: 100,
-          pageKey: pageKey || undefined,
-        });
-        const nfts = data.nfts || [];
-
-        for (const nft of nfts) {
-          const attrs = nft.raw?.metadata?.attributes || [];
-          let classType = "UNKNOWN";
-
-          attrs.forEach(a => {
-            const t = (a.trait_type || "").toLowerCase();
-            if (t === "class" || t === "type") classType = (a.value || "").toUpperCase();
-          });
-
-          // Since the contract is unverified and IPFS metadata lacks the audit array,
-          // we deterministically simulate global audits directly off the tokenId hash (approx 3% hit rate).
-          const hashVal = cyrb53(nft.tokenId, 6969);
-          const isAudited = (hashVal % 100) < 3;
-
-          if (isAudited) {
-            const statusStr = hashVal % 2 === 0 ? "UNDER AUDIT" : "DELINQUENT";
-            const i = nft.image?.cachedUrl || nft.image?.originalUrl || nft.image?.pngUrl || nft.raw?.metadata?.image || "";
-            foundAlerts.push({ id: nft.tokenId, class: classType, image: i, status: statusStr });
-          }
-        }
-
-        setPagesScraped(prev => prev + 1);
-        if (data.pageKey) {
-          pageKey = data.pageKey;
-          // small pause to respect limits and simulate processing time
-          await new Promise(r => setTimeout(r, 100));
-        } else {
-          break;
-        }
-      }
-
-      // Sort global audits by ID
-      foundAlerts.sort((a, b) => parseInt(a.id) - parseInt(b.id));
-      setGlobalAudited(foundAlerts);
-    } catch (e) {
-      console.error(e);
-    }
-    setIsScraping(false);
-  };
-
   const BK = colors.fg;
   const BG = colors.bg;
+
+  // Compute wallet tax summary from real on-chain data
+  const walletSummary = taxData ? (() => {
+    const citizens = sorted.filter(n => !n.isEvader);
+    const statuses = citizens.map(n => taxData[n.id]?.status).filter(Boolean);
+    return {
+      delinquent: statuses.filter(s => s === "DELINQUENT").length,
+      dueToday: statuses.filter(s => s === "DUE_TODAY").length,
+      warning: statuses.filter(s => s === "WARNING").length,
+      current: statuses.filter(s => s === "CURRENT").length,
+      audited: citizens.filter(n => taxData[n.id]?.auditDue).length,
+      insured: citizens.filter(n => taxData[n.id]?.insured).length,
+    };
+  })() : null;
+
+  const STATUS_COLORS = { DELINQUENT: "#ff0000", DUE_TODAY: "#ff6600", WARNING: "#cc8800", CURRENT: "#008800" };
 
   return (
     <div
@@ -171,87 +163,192 @@ export default function IrsWatchdog({ mobile, ownedNFTs, selectNFT, setView, wal
         </div>
         {sorted.length > 0 && (
           <div style={{ display: "flex", gap: 12, marginTop: 10, flexWrap: "wrap", fontSize: 16, fontWeight: 700 }}>
-            {taxData && (() => {
-              const killableCount = sorted.filter(n => taxData[n.id]?.killable).length;
-              return killableCount > 0 ? (
-                <span style={{ background: "#ff0000", color: "#fff", padding: "4px 10px" }}>
-                  {killableCount} KILLABLE
-                </span>
-              ) : null;
-            })()}
-            {sorted.filter(n => n.inAudit).length > 0 && (
-              <span style={{ background: colors.error, color: "#fff", padding: "4px 10px" }}>
-                {sorted.filter(n => n.inAudit).length} IN AUDIT
-              </span>
-            )}
-            {sorted.filter(n => n.taxDue).length > 0 && (
-              <span style={{ background: BK, color: BG, padding: "4px 10px" }}>
-                {sorted.filter(n => n.taxDue).length} TAX DUE
-              </span>
-            )}
-            {sorted.filter(n => !n.inAudit && !n.taxDue).length > 0 && (
-              <span style={{ background: "transparent", color: BK, padding: "4px 10px", border: `2px solid ${BK}` }}>
-                {sorted.filter(n => !n.inAudit && !n.taxDue).length} CLEAR
-              </span>
-            )}
             {taxLoading && <span style={{ opacity: 0.5, padding: "4px 10px" }}>CHECKING ON-CHAIN...</span>}
+            {walletSummary && walletSummary.delinquent > 0 && (
+              <span style={{ background: "#ff0000", color: "#fff", padding: "4px 10px" }}>
+                {walletSummary.delinquent} DELINQUENT
+              </span>
+            )}
+            {walletSummary && walletSummary.dueToday > 0 && (
+              <span style={{ background: "#ff6600", color: "#fff", padding: "4px 10px" }}>
+                {walletSummary.dueToday} DUE TODAY
+              </span>
+            )}
+            {walletSummary && walletSummary.warning > 0 && (
+              <span style={{ background: "#cc8800", color: "#fff", padding: "4px 10px" }}>
+                {walletSummary.warning} LOW
+              </span>
+            )}
+            {walletSummary && walletSummary.audited > 0 && (
+              <span style={{ background: colors.error, color: "#fff", padding: "4px 10px" }}>
+                {walletSummary.audited} UNDER AUDIT
+              </span>
+            )}
+            {walletSummary && walletSummary.current > 0 && (
+              <span style={{ background: "transparent", color: BK, padding: "4px 10px", border: `2px solid ${BK}` }}>
+                {walletSummary.current} CURRENT
+              </span>
+            )}
           </div>
         )}
       </div>
-      
+
+      {/* GLOBAL ON-CHAIN SCAN */}
       <div style={{ display: "flex", flexDirection: "column", gap: 12, border: `2px solid ${BK}`, padding: mobile ? 16 : 24, background: "transparent" }}>
         <div style={{ fontSize: 24, fontWeight: 800, fontFamily: '"Bajern", serif' }}>
           GLOBAL ON-CHAIN AUDIT SWEEP
         </div>
         <div style={{ fontSize: 16, fontWeight: 500 }}>
-          Scrape the entire smart contract to identify any citizen globally recorded as under audit, delinquent, or evader status.
+          Scans all 6969 citizens on-chain via Multicall3 to identify delinquent taxpayers and active audits.
         </div>
-        <button
-          onClick={scrapeContract}
-          disabled={isScraping}
-          style={{
-            background: isScraping ? BK : BG,
-            color: isScraping ? BG : BK,
-            border: `3px solid ${BK}`,
-            padding: "16px 24px",
-            fontSize: mobile ? 18 : 24,
-            fontWeight: 800,
-            cursor: isScraping ? "wait" : "pointer",
-            fontFamily: '"Bajern", serif',
-            alignSelf: "flex-start",
-            transition: "all 0.15s"
-          }}
-        >
-          {isScraping ? `SCRAPING... SECURING PAGE ${pagesScraped}` : "INITIATE FULL SCRAPE"}
-        </button>
+        <div style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
+          <button
+            onClick={runScan}
+            disabled={scanning}
+            style={{
+              background: scanning ? BK : BG,
+              color: scanning ? BG : BK,
+              border: `3px solid ${BK}`,
+              padding: "16px 24px",
+              fontSize: mobile ? 18 : 24,
+              fontWeight: 800,
+              cursor: scanning ? "wait" : "pointer",
+              fontFamily: '"Bajern", serif',
+              transition: "all 0.15s",
+            }}
+          >
+            {scanning ? "SCANNING 6969 CITIZENS..." : "INITIATE FULL SCAN"}
+          </button>
+          {scanData && !scanning && (
+            <span style={{ fontSize: 12, opacity: 0.5, fontFamily: '"DeptBody", monospace' }}>
+              SCANNED {new Date(scanData.scannedAt).toLocaleTimeString()} — EPOCH {scanData.currentEpoch}
+            </span>
+          )}
+        </div>
+        {scanError && (
+          <div style={{ fontSize: 14, fontWeight: 700, color: colors.error }}>{scanError}</div>
+        )}
       </div>
 
-      {globalAudited.length > 0 && (
-        <div style={{ marginTop: 24 }}>
-          <div style={{ fontSize: 28, fontWeight: 800, fontFamily: '"Bajern", serif', borderBottom: `2px solid ${BK}`, paddingBottom: 12, marginBottom: 24 }}>
-             {globalAudited.length} GLOBAL AUDITS IDENTIFIED:
+      {/* SCAN RESULTS */}
+      {scanData && !scanning && (
+        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          {/* Summary bar */}
+          <div style={{
+            display: "flex", gap: mobile ? 12 : 24, flexWrap: "wrap",
+            borderBottom: `2px solid ${BK}`, paddingBottom: 16,
+            fontFamily: '"DeptBody", monospace',
+          }}>
+            <div>
+              <span style={{ fontSize: mobile ? 28 : 40, fontWeight: 900, color: "#ff0000" }}>{scanData.killableCount}</span>
+              <span style={{ fontSize: mobile ? 11 : 14, opacity: 0.6, marginLeft: 8 }}>KILLABLE</span>
+            </div>
+            <div>
+              <span style={{ fontSize: mobile ? 28 : 40, fontWeight: 900 }}>{scanData.delinquentCount}</span>
+              <span style={{ fontSize: mobile ? 11 : 14, opacity: 0.6, marginLeft: 8 }}>DELINQUENT</span>
+            </div>
+            <div>
+              <span style={{ fontSize: mobile ? 28 : 40, fontWeight: 900 }}>{scanData.totalScanned}</span>
+              <span style={{ fontSize: mobile ? 11 : 14, opacity: 0.6, marginLeft: 8 }}>SCANNED</span>
+            </div>
           </div>
-          <div style={{ display: "grid", gridTemplateColumns: mobile ? "repeat(auto-fill, minmax(140px, 1fr))" : "repeat(auto-fill, minmax(180px, 1fr))", gap: mobile ? 12 : 20 }}>
-            {globalAudited.map((gnft) => (
-              <div key={`g-${gnft.id}`} style={{ border: `3px dashed ${BK}`, padding: 8, background: "rgba(0,0,0,0.02)" }}>
-                 {gnft.image ? (
-                  <img src={gnft.image} alt="" style={{ width: "100%", aspectRatio: "1", imageRendering: "pixelated", border: `1px solid ${BK}` }} />
-                ) : (
-                  <div style={{ width: "100%", aspectRatio: "1", background: BK, color: BG, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24, fontWeight: 800 }}>
-                    #{gnft.id}
-                  </div>
-                )}
-                <div style={{ textAlign: "center", display: "flex", flexDirection: "column", gap: 4, marginTop: 8 }}>
-                  <div style={{ fontSize: 24, fontWeight: 800, fontFamily: '"Bajern", serif' }}>#{gnft.id}</div>
-                  <div style={{ fontSize: 14, fontWeight: 600, textTransform: "uppercase" }}>{gnft.class}</div>
-                  <div style={{ fontSize: 15, background: BK, color: BG, padding: "4px 0", fontWeight: 700 }}>{gnft.status}</div>
+
+          {/* Killable — locked overlay */}
+          {scanData.killableCount > 0 && (
+            <div
+              onClick={() => setView("killfeed")}
+              style={{
+                position: "relative",
+                border: `3px solid #ff0000`,
+                padding: mobile ? 16 : 24,
+                cursor: "pointer",
+                overflow: "hidden",
+              }}
+            >
+              {/* Blurred fake rows behind */}
+              <div style={{ filter: "blur(6px)", opacity: 0.4, pointerEvents: "none" }}>
+                <div style={{ fontSize: mobile ? 18 : 22, fontWeight: 800, fontFamily: '"Bajern", serif', marginBottom: 8, color: "#ff0000" }}>
+                  KILLABLE — {scanData.killableCount} CITIZENS
+                </div>
+                <div style={{ display: "grid", gridTemplateColumns: mobile ? "1fr" : "1fr 1fr", gap: 4 }}>
+                  {scanData.killable.slice(0, 6).map((c, i) => (
+                    <div key={i} style={{
+                      display: "flex", alignItems: "center", gap: 8,
+                      border: `1px solid ${BK}44`, padding: mobile ? "6px 8px" : "8px 12px",
+                    }}>
+                      <div style={{ fontSize: mobile ? 14 : 16, fontWeight: 700, fontFamily: '"DeptBody", monospace' }}>
+                        #????
+                      </div>
+                      <div style={{ flex: 1, fontSize: mobile ? 10 : 12, fontFamily: '"DeptBody", monospace' }}>
+                        ??d OVERDUE — AUDIT EXPIRED
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
-            ))}
-          </div>
+              {/* Unlock overlay */}
+              <div style={{
+                position: "absolute", inset: 0,
+                display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+                gap: 8,
+              }}>
+                <div style={{
+                  fontSize: mobile ? 22 : 32, fontWeight: 900,
+                  fontFamily: '"Bajern", serif', color: "#ff0000",
+                  textShadow: `0 0 20px ${BG}, 0 0 40px ${BG}`,
+                }}>
+                  CLASSIFIED
+                </div>
+                <div style={{
+                  background: "#ff0000", color: "#fff",
+                  padding: mobile ? "8px 20px" : "10px 28px",
+                  fontSize: mobile ? 14 : 18, fontWeight: 700,
+                  fontFamily: '"DeptBody", monospace', letterSpacing: 1,
+                }}>
+                  UNLOCK {scanData.killableCount} KILLABLE CITIZENS
+                </div>
+                <div style={{
+                  fontSize: 12, fontFamily: '"DeptBody", monospace', opacity: 0.6,
+                  textShadow: `0 0 10px ${BG}`,
+                }}>
+                  0.0069 ETH — ONE-TIME ACCESS
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Delinquent list (first 50) */}
+          {scanData.delinquent.length > 0 && (
+            <div>
+              <div style={{ fontSize: mobile ? 18 : 22, fontWeight: 800, fontFamily: '"Bajern", serif', marginBottom: 8 }}>
+                DELINQUENT — {scanData.delinquent.length} CITIZENS
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: mobile ? "1fr" : "1fr 1fr 1fr", gap: 4 }}>
+                {scanData.delinquent.slice(0, 50).map((c) => (
+                  <div key={c.tokenId} style={{
+                    display: "flex", alignItems: "center", gap: 8,
+                    border: `1px solid ${BK}44`, padding: mobile ? "6px 8px" : "8px 12px",
+                  }}>
+                    <div style={{ fontSize: mobile ? 14 : 16, fontWeight: 700, fontFamily: '"DeptBody", monospace' }}>
+                      #{c.tokenId}
+                    </div>
+                    <div style={{ flex: 1, fontSize: mobile ? 10 : 12, fontFamily: '"DeptBody", monospace', opacity: 0.5 }}>
+                      {Math.abs(c.daysRemaining)}d overdue
+                    </div>
+                  </div>
+                ))}
+              </div>
+              {scanData.delinquent.length > 50 && (
+                <div style={{ fontSize: 13, opacity: 0.5, marginTop: 8, fontFamily: '"DeptBody", monospace' }}>
+                  + {scanData.delinquent.length - 50} MORE DELINQUENT CITIZENS
+                </div>
+              )}
+            </div>
+          )}
         </div>
       )}
 
+      {/* WALLET CITIZENS */}
       {sorted.length === 0 ? (
         <div style={{ fontSize: 20, fontWeight: 500, padding: "40px 0", borderTop: `2px dashed ${BK}` }}>
           No local citizens imported. Return to the REGISTRY to pull wallets.
@@ -290,121 +387,131 @@ export default function IrsWatchdog({ mobile, ownedNFTs, selectNFT, setView, wal
               marginTop: 12,
             }}
           >
-            {sorted.map((nft) => (
-              <div
-                key={nft.id}
-                onClick={() => {
-                  selectNFT(nft);
-                  setView("registry");
-                }}
-                style={{
-                  border: nft.inAudit ? `3px solid ${colors.error}` : nft.taxDue ? `3px solid ${BK}` : `3px solid ${BK}`,
-                  padding: 8,
-                  cursor: "pointer",
-                  background: "transparent",
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: 8,
-                  transition: "transform 0.1s, background 0.1s",
-                  position: "relative",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = "translate(-2px, -2px)";
-                  e.currentTarget.style.boxShadow = `4px 4px 0px ${BK}`;
-                  e.currentTarget.style.background = colors.hover;
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = "none";
-                  e.currentTarget.style.boxShadow = "none";
-                  e.currentTarget.style.background = "transparent";
-                }}
-              >
-                {nft.image ? (
-                  <img
-                    src={nft.image}
-                    alt={`CITIZEN #${nft.id}`}
-                    style={{
-                      width: "100%",
-                      aspectRatio: "1",
-                      imageRendering: "pixelated",
-                      display: "block",
-                      border: `1px solid ${BK}`,
-                    }}
-                  />
-                ) : (
-                  <div
-                    style={{
-                      width: "100%",
-                      aspectRatio: "1",
-                      background: BK,
-                      color: BG,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      fontSize: 24,
-                      fontWeight: 800,
-                    }}
-                  >
-                    #{nft.id}
-                  </div>
-                )}
-                {(() => {
-                  const tax = taxData?.[nft.id];
-                  const killable = tax?.killable;
-                  return (killable || nft.inAudit || nft.taxDue) ? (
-                    <div style={{ position: "absolute", top: 4, right: 4, display: "flex", flexDirection: "column", gap: 2 }}>
-                      {killable && <div style={{ background: "#ff0000", color: "#fff", fontSize: 14, fontWeight: 700, padding: "4px 8px", lineHeight: 1.2 }}>KILLABLE</div>}
-                      {!killable && nft.inAudit && <div style={{ background: colors.error, color: "#fff", fontSize: 14, fontWeight: 700, padding: "4px 8px", lineHeight: 1.2 }}>AUDIT</div>}
-                      {nft.taxDue && <div style={{ background: BK, color: BG, fontSize: 14, fontWeight: 700, padding: "4px 8px", lineHeight: 1.2 }}>TAX DUE</div>}
+            {sorted.map((nft) => {
+              const tax = taxData?.[nft.id];
+              const status = tax?.status || (nft.inAudit ? "AUDIT" : nft.taxDue ? "TAX DUE" : null);
+              const statusColor = STATUS_COLORS[status] || (nft.inAudit ? colors.error : BK);
+              const statusLabel = status === "DELINQUENT" ? "DELINQUENT" : status === "DUE_TODAY" ? "DUE TODAY" : status === "WARNING" ? "LOW" : status === "CURRENT" ? "CURRENT" : nft.inAudit ? "IN AUDIT" : nft.taxDue ? "TAX DUE" : "CLEAR";
+
+              return (
+                <div
+                  key={nft.id}
+                  onClick={() => {
+                    selectNFT(nft);
+                    setView("registry");
+                  }}
+                  style={{
+                    border: `3px solid ${status === "DELINQUENT" ? "#ff0000" : BK}`,
+                    padding: 8,
+                    cursor: "pointer",
+                    background: "transparent",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 8,
+                    transition: "transform 0.1s, background 0.1s",
+                    position: "relative",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = "translate(-2px, -2px)";
+                    e.currentTarget.style.boxShadow = `4px 4px 0px ${BK}`;
+                    e.currentTarget.style.background = colors.hover;
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = "none";
+                    e.currentTarget.style.boxShadow = "none";
+                    e.currentTarget.style.background = "transparent";
+                  }}
+                >
+                  {nft.image ? (
+                    <img
+                      src={nft.image}
+                      alt={`CITIZEN #${nft.id}`}
+                      style={{
+                        width: "100%",
+                        aspectRatio: "1",
+                        imageRendering: "pixelated",
+                        display: "block",
+                        border: `1px solid ${BK}`,
+                      }}
+                    />
+                  ) : (
+                    <div
+                      style={{
+                        width: "100%",
+                        aspectRatio: "1",
+                        background: BK,
+                        color: BG,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        fontSize: 24,
+                        fontWeight: 800,
+                      }}
+                    >
+                      #{nft.id}
                     </div>
-                  ) : null;
-                })()}
-                <div style={{ textAlign: "center", display: "flex", flexDirection: "column", gap: 4 }}>
-                  <div style={{ fontSize: mobile ? 18 : 24, fontWeight: 800, fontFamily: '"Bajern", serif' }}>
-                    #{nft.id}
-                  </div>
-                  <div style={{ fontSize: mobile ? 14 : 16, fontWeight: 600, textTransform: "uppercase" }}>
-                    {nft.class !== "UNKNOWN" ? nft.class : "UNKNOWN"}
-                  </div>
-                  {(() => {
-                    const tax = taxData?.[nft.id];
-                    const killable = tax?.killable;
-                    const delinquent = tax?.status === "DELINQUENT";
-                    const label = killable ? "KILLABLE" : delinquent ? "DELINQUENT" : nft.inAudit ? "IN AUDIT" : nft.taxDue ? "TAX DUE" : "CLEAR";
-                    const bg = killable ? "#ff0000" : delinquent ? "#cc0000" : nft.inAudit ? colors.error : nft.taxDue ? BK : "transparent";
-                    const fg = killable || delinquent ? "#fff" : nft.inAudit ? "#fff" : nft.taxDue ? BG : BK;
-                    return (
+                  )}
+                  {/* Status overlay */}
+                  {status && status !== "CURRENT" && (
+                    <div style={{ position: "absolute", top: 4, right: 4, display: "flex", flexDirection: "column", gap: 2 }}>
                       <div style={{
+                        background: statusColor, color: "#fff",
+                        fontSize: 14, fontWeight: 700, padding: "4px 8px", lineHeight: 1.2,
+                      }}>{statusLabel}</div>
+                    </div>
+                  )}
+                  {tax?.auditDue && (
+                    <div style={{ position: "absolute", top: 4, left: 4 }}>
+                      <div style={{
+                        background: colors.error, color: "#fff",
+                        fontSize: 11, fontWeight: 700, padding: "3px 6px", lineHeight: 1.2,
+                      }}>AUDIT</div>
+                    </div>
+                  )}
+                  <div style={{ textAlign: "center", display: "flex", flexDirection: "column", gap: 4 }}>
+                    <div style={{ fontSize: mobile ? 18 : 24, fontWeight: 800, fontFamily: '"Bajern", serif' }}>
+                      #{nft.id}
+                    </div>
+                    <div style={{ fontSize: mobile ? 14 : 16, fontWeight: 600, textTransform: "uppercase" }}>
+                      {nft.class !== "UNKNOWN" ? nft.class : "UNKNOWN"}
+                    </div>
+                    <div style={{
+                      fontSize: 14, fontWeight: 700, padding: "4px 0",
+                      background: STATUS_COLORS[status] || "transparent",
+                      color: STATUS_COLORS[status] ? "#fff" : BK,
+                      border: !STATUS_COLORS[status] ? `1px solid ${BK}` : "none",
+                    }}>
+                      {statusLabel}
+                    </div>
+                    {tax && (
+                      <div style={{ fontSize: 11, opacity: 0.5, fontFamily: '"DeptBody", monospace' }}>
+                        {tax.daysRemaining < 0
+                          ? `${Math.abs(tax.daysRemaining)}d OVERDUE`
+                          : tax.daysRemaining === 0
+                          ? "DUE NOW"
+                          : `${tax.daysRemaining}d remaining`}
+                      </div>
+                    )}
+                    <a
+                      href={`https://opensea.io/assets/ethereum/${CONTRACT}/${nft.id}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={(e) => e.stopPropagation()}
+                      style={{
                         fontSize: 14,
                         fontWeight: 700,
-                        padding: "4px 0",
-                        background: bg,
-                        color: fg,
-                        border: bg === "transparent" ? `1px solid ${BK}` : "none",
-                      }}>
-                        {label}
-                      </div>
-                    );
-                  })()}
-                  <a
-                    href={`https://opensea.io/assets/ethereum/${CONTRACT}/${nft.id}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    onClick={(e) => e.stopPropagation()}
-                    style={{
-                      fontSize: 14,
-                      fontWeight: 700,
-                      color: BK,
-                      textDecoration: "none",
-                      opacity: 0.6,
-                      marginTop: 2,
-                    }}
-                  >
-                    OPENSEA
-                  </a>
+                        color: BK,
+                        textDecoration: "none",
+                        opacity: 0.6,
+                        marginTop: 2,
+                      }}
+                    >
+                      OPENSEA
+                    </a>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </>
       )}

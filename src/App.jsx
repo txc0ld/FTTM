@@ -69,6 +69,7 @@ export default function App() {
   // Dropdown state
   const [intelOpen, setIntelOpen] = useState(false);
   const [reportsOpen, setReportsOpen] = useState(false);
+  const [killableTab, setKillableTab] = useState(false);
 
   // Batch export state
   const [batchExporting, setBatchExporting] = useState(false);
@@ -92,6 +93,7 @@ export default function App() {
     const path = v === "registry" ? "/" : `/${v}`;
     window.history.pushState({}, "", path);
     setView(v);
+    if (v !== "killfeed") setKillableTab(false);
     setIntelOpen(false);
     setReportsOpen(false);
     setMenuOpen(false);
@@ -581,13 +583,14 @@ export default function App() {
       </div>
 
       {/* GLOBAL INFO TICKER */}
-      <div style={{ background: uiFg, color: uiBg, padding: mobile ? "6px 12px" : "8px 24px", display: "flex", justifyContent: "space-between", fontSize: mobile ? 14 : 16, fontWeight: "bold", letterSpacing: 1, textTransform: "uppercase", gap: mobile ? 8 : 0, flexWrap: "wrap" }}>
+      <div style={{ background: uiFg, color: uiBg, padding: mobile ? "6px 12px" : "8px 24px", display: "flex", justifyContent: "space-between", fontSize: mobile ? 14 : 16, fontWeight: "bold", letterSpacing: 1, textTransform: "uppercase", gap: mobile ? 8 : 0, flexWrap: "wrap", alignItems: "center" }}>
          <span>{mobile ? `DAY ${tickerVals.day}` : `DAY: ${tickerVals.day} (${tickerVals.time})`}</span>
          <span>{mobile ? `${tickerVals.taxRate} ETH` : `TAX RATE: ${tickerVals.taxRate} ETH`}</span>
          {!mobile && <span>POPULATION: 6969 CITIZENS</span>}
          {mobile && <span>6969</span>}
          {tickerVals.treasury != null && <span>{mobile ? `${tickerVals.treasury} ETH` : `TREASURY: ${tickerVals.treasury} ETH`}</span>}
          {!mobile && tickerVals.treasury != null && <span>SPLIT: {(tickerVals.treasury / 69).toFixed(4)} ETH</span>}
+         <span onClick={() => { setKillableTab(true); navTo("killfeed"); }} style={{ color: "#ff0000", cursor: "pointer", background: uiBg, padding: "2px 8px", fontSize: mobile ? 12 : 14 }}>TODAY'S KILLABLE</span>
       </div>
 
       <div style={{ flex: 1, display: "flex", position: "relative", flexDirection: "column" }}>
@@ -634,7 +637,7 @@ export default function App() {
           }}
           onClick={() => navTo("registry")}
         >
-          {view === "riot" ? "riot club" : view === "watchdog" ? "irs watchdog" : view === "citizenship" ? "the citizenship" : view === "boneyard" ? "the boneyard" : view === "killfeed" ? "kill feed" : view === "whalewatch" ? "whale watch" : view === "census" ? "census bureau" : view === "taxtracker" ? "tax tracker" : "reaper registry"}
+          {view === "riot" ? "riot club" : view === "watchdog" ? "irs watchdog" : view === "citizenship" ? "the citizenship" : view === "boneyard" ? "the boneyard" : view === "killfeed" ? (killableTab ? "killable" : "kill feed") : view === "whalewatch" ? "whale watch" : view === "census" ? "census bureau" : view === "taxtracker" ? "tax tracker" : "reaper registry"}
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           <div style={{ fontSize: mobile ? 11 : 14, fontWeight: 400, textAlign: "right", fontFamily: `"${BODY_FONT}", monospace`, opacity: 0.6, lineHeight: 1.3 }}>
@@ -722,6 +725,7 @@ export default function App() {
               { id: "registry", label: "REGISTRY" },
               { id: "riot", label: "RIOT CLUB" },
               { id: "boneyard", label: "BONEYARD" },
+              { id: "killable", label: "KILLABLE", red: true },
               { id: null, label: "INTEL", children: [
                 { id: "killfeed", label: "KILL FEED" },
                 { id: "whalewatch", label: "WHALE WATCH" },
@@ -736,16 +740,24 @@ export default function App() {
               <div key={idx}>
                 {item.id ? (
                   <div
-                    onClick={() => navTo(item.id)}
+                    onClick={() => {
+                      if (item.id === "killable") {
+                        setKillableTab(true);
+                        navTo("killfeed");
+                      } else {
+                        if (view === "killfeed" && killableTab) setKillableTab(false);
+                        navTo(item.id);
+                      }
+                    }}
                     style={{
                       padding: "14px 24px",
                       cursor: "pointer",
                       fontSize: 18,
-                      fontWeight: 500,
+                      fontWeight: item.red ? 800 : 500,
                       fontFamily: `"${BODY_FONT}", monospace`,
                       borderBottom: `1px solid ${uiFg}22`,
-                      background: view === item.id ? uiFg : "transparent",
-                      color: view === item.id ? uiBg : uiFg,
+                      background: item.red ? "#ff0000" : (view === item.id ? uiFg : "transparent"),
+                      color: item.red ? "#fff" : (view === item.id ? uiBg : uiFg),
                       transition: "all 0.15s",
                       animationDelay: `${idx * 0.05}s`,
                     }}
@@ -969,6 +981,27 @@ export default function App() {
           >
             CITIZENSHIP
           </div>
+
+          {/* KILLABLE — red standalone link */}
+          <div
+            onClick={() => { setKillableTab(true); navTo("killfeed"); }}
+            style={{
+              padding: "12px 20px",
+              cursor: "pointer",
+              fontSize: 14,
+              fontWeight: 800,
+              fontFamily: `"${BODY_FONT}", monospace`,
+              borderBottom: `1px solid ${uiFg}22`,
+              background: "#ff0000",
+              color: "#fff",
+              transition: "all 0.15s",
+              letterSpacing: 1,
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = "#cc0000"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = "#ff0000"; }}
+          >
+            KILLABLE
+          </div>
         </div>
       )}
 
@@ -976,13 +1009,13 @@ export default function App() {
         {view === "riot" ? (
           <DailyRiot mobile={mobile} ownedNFTs={ownedNFTs} wallet={wallet} setWallet={setWallet} handleWalletFetch={handleWalletFetch} loading={loading} error={error} />
         ) : view === "watchdog" ? (
-          <IrsWatchdog mobile={mobile} ownedNFTs={ownedNFTs} selectNFT={selectNFT} setView={setView} wallet={wallet} setWallet={setWallet} handleWalletFetch={handleWalletFetch} loading={loading} error={error} />
+          <IrsWatchdog mobile={mobile} ownedNFTs={ownedNFTs} selectNFT={selectNFT} setView={(v) => { if (v === "killfeed") setKillableTab(true); setView(v); }} wallet={wallet} setWallet={setWallet} handleWalletFetch={handleWalletFetch} loading={loading} error={error} />
         ) : view === "citizenship" ? (
           <Citizenship mobile={mobile} />
         ) : view === "boneyard" ? (
           <Boneyard mobile={mobile} />
         ) : view === "killfeed" ? (
-          <KillFeed mobile={mobile} />
+          <KillFeed mobile={mobile} defaultTab={killableTab ? "KILLABLE" : undefined} />
         ) : view === "whalewatch" ? (
           <WhaleWatch mobile={mobile} />
         ) : view === "census" ? (
