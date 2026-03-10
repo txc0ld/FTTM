@@ -253,66 +253,34 @@ export default function IrsWatchdog({ mobile, ownedNFTs, selectNFT, setView, wal
             </div>
           </div>
 
-          {/* Killable — locked overlay */}
+          {/* Killable — link to kill feed */}
           {scanData.killableCount > 0 && (
             <div
               onClick={() => setView("killfeed")}
               style={{
-                position: "relative",
                 border: `3px solid #ff0000`,
                 padding: mobile ? 16 : 24,
                 cursor: "pointer",
-                overflow: "hidden",
+                display: "flex", alignItems: "center", justifyContent: "space-between",
+                gap: 16,
               }}
             >
-              {/* Blurred fake rows behind */}
-              <div style={{ filter: "blur(6px)", opacity: 0.4, pointerEvents: "none" }}>
-                <div style={{ fontSize: mobile ? 18 : 22, fontWeight: 800, fontFamily: '"Bajern", serif', marginBottom: 8, color: "#ff0000" }}>
-                  KILLABLE — {scanData.killableCount} CITIZENS
+              <div>
+                <div style={{ fontSize: mobile ? 18 : 22, fontWeight: 800, fontFamily: '"Bajern", serif', color: "#ff0000" }}>
+                  {scanData.killableCount} KILLABLE CITIZENS
                 </div>
-                <div style={{ display: "grid", gridTemplateColumns: mobile ? "1fr" : "1fr 1fr", gap: 4 }}>
-                  {scanData.killable.slice(0, 6).map((c, i) => (
-                    <div key={i} style={{
-                      display: "flex", alignItems: "center", gap: 8,
-                      border: `1px solid ${BK}44`, padding: mobile ? "6px 8px" : "8px 12px",
-                    }}>
-                      <div style={{ fontSize: mobile ? 14 : 16, fontWeight: 700, fontFamily: '"DeptBody", monospace' }}>
-                        #????
-                      </div>
-                      <div style={{ flex: 1, fontSize: mobile ? 10 : 12, fontFamily: '"DeptBody", monospace' }}>
-                        ??d OVERDUE — AUDIT EXPIRED
-                      </div>
-                    </div>
-                  ))}
+                <div style={{ fontSize: mobile ? 12 : 14, fontFamily: '"DeptBody", monospace', opacity: 0.6, marginTop: 4 }}>
+                  AUDIT EXPIRED — READY TO ELIMINATE
                 </div>
               </div>
-              {/* Unlock overlay */}
               <div style={{
-                position: "absolute", inset: 0,
-                display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
-                gap: 8,
+                background: "#ff0000", color: "#fff",
+                padding: mobile ? "8px 16px" : "10px 24px",
+                fontSize: mobile ? 14 : 18, fontWeight: 700,
+                fontFamily: '"DeptBody", monospace', letterSpacing: 1,
+                flexShrink: 0,
               }}>
-                <div style={{
-                  fontSize: mobile ? 22 : 32, fontWeight: 900,
-                  fontFamily: '"Bajern", serif', color: "#ff0000",
-                  textShadow: `0 0 20px ${BG}, 0 0 40px ${BG}`,
-                }}>
-                  CLASSIFIED
-                </div>
-                <div style={{
-                  background: "#ff0000", color: "#fff",
-                  padding: mobile ? "8px 20px" : "10px 28px",
-                  fontSize: mobile ? 14 : 18, fontWeight: 700,
-                  fontFamily: '"DeptBody", monospace', letterSpacing: 1,
-                }}>
-                  UNLOCK {scanData.killableCount} KILLABLE CITIZENS
-                </div>
-                <div style={{
-                  fontSize: 12, fontFamily: '"DeptBody", monospace', opacity: 0.6,
-                  textShadow: `0 0 10px ${BG}`,
-                }}>
-                  0.0069 ETH — ONE-TIME ACCESS
-                </div>
+                VIEW
               </div>
             </div>
           )}

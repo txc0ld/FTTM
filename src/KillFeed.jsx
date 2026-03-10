@@ -10,9 +10,6 @@ const KILL_CACHE_KEY = "dt_kill_leaderboard";
 const KILLABLE_CACHE_KEY = "dt_killable_cache";
 const FIVE_MIN = 5 * 60 * 1000;
 const TOTAL_CITIZENS = 6969;
-const TREASURY = "0x0dae6E01A88826b4E77d717d9639B64F749C0152";
-const PRICE_ETH = "0.0069";
-const PRICE_HEX = "0x187E7D288000"; // 6900000000000000 wei
 
 function shortAddr(addr) {
   if (!addr) return "UNKNOWN";
@@ -67,10 +64,6 @@ export default function KillFeed({ mobile, defaultTab }) {
   const [killable, setKillable] = useState([]);
   const [killableLoading, setKillableLoading] = useState(false);
   const [killableProgress, setKillableProgress] = useState("");
-  const [killWallet, setKillWallet] = useState(null);
-  const [hasAccess, setHasAccess] = useState(false);
-  const [accessLoading, setAccessLoading] = useState(false);
-  const [payError, setPayError] = useState("");
 
   const bg = colors.bg;
   const fg = colors.fg;
@@ -121,89 +114,6 @@ export default function KillFeed({ mobile, defaultTab }) {
     setKillableProgress("");
   };
 
-  const connectAndCheckAccess = async () => {
-    if (!window.ethereum) {
-      setPayError("OPEN THIS SITE IN METAMASK BROWSER");
-      return;
-    }
-    setAccessLoading(true);
-    setPayError("");
-    try {
-      const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
-      const addr = accounts[0]?.toLowerCase();
-      if (!addr) throw new Error("No account");
-      setKillWallet(addr);
-      const res = await fetch(`/api/killable-access?wallet=${addr}`);
-      const data = await res.json();
-      setHasAccess(data.hasAccess === true);
-    } catch (e) {
-      setPayError(e.message || "Connection failed");
-    }
-    setAccessLoading(false);
-  };
-
-  const payForAccess = async () => {
-    if (!killWallet || !window.ethereum) return;
-    setAccessLoading(true);
-    setPayError("");
-    try {
-      const txHash = await window.ethereum.request({
-        method: "eth_sendTransaction",
-        params: [{
-          from: killWallet,
-          to: TREASURY,
-          value: PRICE_HEX,
-        }],
-      });
-      setPayError("CONFIRMING TRANSACTION...");
-      // Wait for confirmation
-      let confirmed = false;
-      for (let i = 0; i < 60; i++) {
-        await new Promise((r) => setTimeout(r, 3000));
-        try {
-          const receipt = await window.ethereum.request({
-            method: "eth_getTransactionReceipt",
-            params: [txHash],
-          });
-          if (receipt && receipt.status === "0x1") { confirmed = true; break; }
-          if (receipt && receipt.status === "0x0") throw new Error("Transaction reverted");
-        } catch {}
-      }
-      if (!confirmed) throw new Error("Transaction not confirmed after 3 minutes");
-      // Verify with server
-      const res = await fetch("/api/killable-access", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ wallet: killWallet, txHash }),
-      });
-      const result = await res.json();
-      if (result.hasAccess) {
-        setHasAccess(true);
-        setPayError("");
-      } else {
-        throw new Error(result.error || "Verification failed");
-      }
-    } catch (e) {
-      setPayError(e.message || "Payment failed");
-    }
-    setAccessLoading(false);
-  };
-
-  // Auto-check access when switching to KILLABLE tab
-  useEffect(() => {
-    if (tab === "KILLABLE" && !killWallet && window.ethereum) {
-      window.ethereum.request({ method: "eth_accounts" }).then((accounts) => {
-        if (accounts[0]) {
-          const addr = accounts[0].toLowerCase();
-          setKillWallet(addr);
-          fetch(`/api/killable-access?wallet=${addr}`)
-            .then((r) => r.json())
-            .then((d) => setHasAccess(d.hasAccess === true))
-            .catch(() => {});
-        }
-      }).catch(() => {});
-    }
-  }, [tab, killWallet]);
 
   if (!data && loading) {
     return (
@@ -676,87 +586,7 @@ export default function KillFeed({ mobile, defaultTab }) {
       )}
 
       {/* ═══ KILLABLE TAB ═══ */}
-      {tab === "KILLABLE" && !hasAccess && (
-        <div style={{
-          display: "flex", flexDirection: "column", alignItems: "center", gap: 20,
-          border: `3px solid ${fg}`, padding: mobile ? 24 : 48, textAlign: "center",
-        }}>
-          <div style={{ fontSize: mobile ? 24 : 36, fontWeight: 900, fontFamily: `"${HEADING_FONT}", monospace` }}>
-            CLASSIFIED DATA
-          </div>
-          <div style={{ fontSize: mobile ? 13 : 16, fontFamily: `"${BODY_FONT}", monospace`, opacity: 0.7, maxWidth: 500 }}>
-            REAL-TIME KILLABLE CITIZEN SCAN REQUIRES ONE-TIME ACCESS FEE.
-            SCANS ALL 6969 CITIZENS ON-CHAIN TO IDENTIFY TARGETS WITH EXPIRED AUDITS.
-          </div>
-          <div style={{
-            fontSize: mobile ? 32 : 48, fontWeight: 900,
-            fontFamily: `"${BODY_FONT}", monospace`,
-          }}>
-            {PRICE_ETH} ETH
-          </div>
-          <div style={{ fontSize: 12, fontFamily: `"${BODY_FONT}", monospace`, opacity: 0.5 }}>
-            ONE-TIME PAYMENT — PERMANENT ACCESS
-          </div>
-
-          {!killWallet ? (
-            <div style={{ display: "flex", flexDirection: "column", gap: 12, alignItems: "center" }}>
-              {window.ethereum ? (
-                <button
-                  onClick={connectAndCheckAccess}
-                  disabled={accessLoading}
-                  style={{
-                    background: fg, color: bg, border: "none",
-                    padding: "14px 32px", fontSize: mobile ? 16 : 20, fontWeight: 700,
-                    fontFamily: `"${HEADING_FONT}", monospace`, cursor: "pointer",
-                    letterSpacing: 1,
-                  }}
-                >
-                  {accessLoading ? "CONNECTING..." : "CONNECT WALLET"}
-                </button>
-              ) : (
-                <a
-                  href={`https://metamask.app.link/dapp/${window.location.host}/killfeed`}
-                  style={{
-                    background: fg, color: bg, border: "none",
-                    padding: "14px 32px", fontSize: mobile ? 16 : 20, fontWeight: 700,
-                    fontFamily: `"${HEADING_FONT}", monospace`, cursor: "pointer",
-                    letterSpacing: 1, textDecoration: "none", display: "inline-block",
-                  }}
-                >
-                  OPEN IN METAMASK
-                </a>
-              )}
-            </div>
-          ) : (
-            <button
-              onClick={payForAccess}
-              disabled={accessLoading}
-              style={{
-                background: "#ff0000", color: "#fff", border: "none",
-                padding: "14px 32px", fontSize: mobile ? 16 : 20, fontWeight: 700,
-                fontFamily: `"${HEADING_FONT}", monospace`, cursor: "pointer",
-                letterSpacing: 1,
-              }}
-            >
-              {accessLoading ? (payError || "PROCESSING...") : `PAY ${PRICE_ETH} ETH`}
-            </button>
-          )}
-
-          {killWallet && (
-            <div style={{ fontSize: 12, fontFamily: `"${BODY_FONT}", monospace`, opacity: 0.5 }}>
-              {killWallet.slice(0, 6)}...{killWallet.slice(-4)}
-            </div>
-          )}
-
-          {payError && !accessLoading && (
-            <div style={{ fontSize: 13, fontFamily: `"${BODY_FONT}", monospace`, color: "#ff0000" }}>
-              {payError}
-            </div>
-          )}
-        </div>
-      )}
-
-      {tab === "KILLABLE" && hasAccess && (
+      {tab === "KILLABLE" && (
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
           <div style={{ fontSize: mobile ? 12 : 14, opacity: 0.5, fontFamily: `"${BODY_FONT}", monospace` }}>
             CITIZENS WITH DELINQUENT TAX + EXPIRED AUDIT — READY TO BE ELIMINATED
