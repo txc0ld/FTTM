@@ -3,7 +3,7 @@ const GAME_CONTRACT = "0xa448c7f618087dda1a3b128cad8a424fbae4b71f";
 
 function getRPC() {
   const key = process.env.ALCHEMY_API_KEY;
-  return key ? `https://eth-mainnet.g.alchemy.com/v3/${key}` : LLAMA_RPC;
+  return key ? `https://eth-mainnet.g.alchemy.com/v2/${key}` : LLAMA_RPC;
 }
 
 // Function selectors
