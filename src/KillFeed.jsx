@@ -797,7 +797,16 @@ export default function KillFeed({ mobile, defaultTab }) {
               gridTemplateColumns: mobile ? "1fr" : "1fr 1fr",
               gap: 4,
             }}>
-              {killable.map((c) => (
+              {[...killable].sort((a, b) => {
+                // Killable now first, then soonest countdown, then no audit last
+                const nowSec = Math.floor(Date.now() / 1000);
+                const aReady = a.killable ? 1 : 0;
+                const bReady = b.killable ? 1 : 0;
+                if (aReady !== bReady) return bReady - aReady;
+                const aTime = a.auditDue || Infinity;
+                const bTime = b.auditDue || Infinity;
+                return aTime - bTime;
+              }).map((c) => (
                 <div
                   key={c.tokenId}
                   style={{
