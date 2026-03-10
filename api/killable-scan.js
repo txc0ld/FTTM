@@ -1,6 +1,7 @@
 import { AbiCoder } from "ethers";
 
 const GAME_CONTRACT = "0xa448c7f618087dda1a3b128cad8a424fbae4b71f";
+const CITIZENS_CONTRACT = "0x4f249b2dc6cecbd549a0c354bbfc4919e8c5d3ae";
 const MULTICALL3 = "0xcA11bde05977b3631167028862bE2a173976CA11";
 const TOTAL = 6969;
 
@@ -8,6 +9,7 @@ const TOTAL = 6969;
 const SEL_CURRENT_EPOCH = "0x76671808";
 const SEL_LAST_EPOCH_PAID = "0x72e012d6";
 const SEL_AUDIT_DUE_TIMESTAMP = "0x608cf06b";
+const SEL_OWNER_OF = "0x6352211e"; // ERC721 ownerOf(uint256)
 
 // Multicall3.aggregate3 selector
 const AGGREGATE3_SEL = "0x82ad56cb";
@@ -77,9 +79,10 @@ export default async function handler(req, res) {
     const nowSec = Math.floor(Date.now() / 1000);
 
     // 2. Scan all tokens using Multicall3
-    //    Each token needs 2 calls: lastEpochPaid + auditDueTimestamp
-    //    Pack ~500 tokens per multicall (1000 sub-calls)
-    const CHUNK = 500;
+    //    Each token needs 3 calls: ownerOf + lastEpochPaid + auditDueTimestamp
+    //    ownerOf filters out burned/killed citizens (reverts for non-existent tokens)
+    //    Pack ~333 tokens per multicall (~999 sub-calls)
+    const CHUNK = 333;
     const delinquent = [];
     const killable = [];
 
@@ -87,6 +90,7 @@ export default async function handler(req, res) {
       const end = Math.min(start + CHUNK - 1, TOTAL);
       const subCalls = [];
       for (let id = start; id <= end; id++) {
+        subCalls.push({ target: CITIZENS_CONTRACT, data: SEL_OWNER_OF + pad32(id) });
         subCalls.push({ target: GAME_CONTRACT, data: SEL_LAST_EPOCH_PAID + pad32(id) });
         subCalls.push({ target: GAME_CONTRACT, data: SEL_AUDIT_DUE_TIMESTAMP + pad32(id) });
       }
@@ -107,8 +111,15 @@ export default async function handler(req, res) {
 
       for (let j = 0; j < (end - start + 1); j++) {
         const id = start + j;
-        const lastPaidResult = results[j * 2];
-        const auditResult = results[j * 2 + 1];
+        const ownerResult = results[j * 3];
+        const lastPaidResult = results[j * 3 + 1];
+        const auditResult = results[j * 3 + 2];
+
+        // Skip burned/killed citizens (ownerOf reverts or returns zero address)
+        if (!ownerResult.success) continue;
+        const ownerHex = ownerResult.data;
+        if (!ownerHex || ownerHex === "0x" || BigInt(ownerHex) === 0n) continue;
+
         if (!lastPaidResult.success) continue;
 
         const lastPaid = parseInt(lastPaidResult.data, 16);
