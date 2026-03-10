@@ -7,7 +7,7 @@
       "maxDuration": 30
     },
     "api/tax-status.js": {
-      "maxDuration": 30
+      "maxDuration": 60
     }
   },
   "rewrites": [

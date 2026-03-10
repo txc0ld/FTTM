@@ -83,7 +83,8 @@ export default function KillFeed({ mobile }) {
     setKillableLoading(true);
     killableCancelRef.current = false;
     const found = [];
-    const batchSize = 200;
+    const batchSize = 100;
+    const maxRetries = 2;
     const nowSec = Math.floor(Date.now() / 1000);
 
     for (let start = 1; start <= TOTAL_CITIZENS; start += batchSize) {
@@ -91,28 +92,39 @@ export default function KillFeed({ mobile }) {
       const end = Math.min(start + batchSize - 1, TOTAL_CITIZENS);
       const tokenIds = [];
       for (let i = start; i <= end; i++) tokenIds.push(i);
-      setKillableProgress(`SCANNING ${start}-${end} / ${TOTAL_CITIZENS}`);
+      setKillableProgress(`SCANNING ${start}-${end} / ${TOTAL_CITIZENS} (${found.length} found)`);
 
-      try {
-        const res = await fetch("/api/tax-status", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ tokenIds }),
-        });
-        if (!res.ok) continue;
-        const batch = await res.json();
-        for (const c of batch.citizens) {
-          if (c.status === "DELINQUENT") {
-            const killable = c.auditDue && c.auditDue <= nowSec;
-            found.push({ ...c, killable });
+      let success = false;
+      for (let attempt = 0; attempt <= maxRetries && !success; attempt++) {
+        try {
+          const res = await fetch("/api/tax-status", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ tokenIds }),
+          });
+          if (!res.ok) {
+            if (attempt < maxRetries) { await new Promise((r) => setTimeout(r, 500 * (attempt + 1))); continue; }
+            break;
           }
+          const batch = await res.json();
+          for (const c of batch.citizens) {
+            if (c.status === "DELINQUENT") {
+              const killable = c.auditDue && c.auditDue <= nowSec;
+              found.push({ ...c, killable });
+            }
+          }
+          success = true;
+        } catch {
+          if (attempt < maxRetries) await new Promise((r) => setTimeout(r, 500 * (attempt + 1)));
         }
-      } catch {}
-      // Small delay between batches
-      await new Promise((r) => setTimeout(r, 150));
+      }
+      await new Promise((r) => setTimeout(r, 250));
     }
 
-    found.sort((a, b) => a.daysRemaining - b.daysRemaining);
+    found.sort((a, b) => {
+      if (a.killable !== b.killable) return a.killable ? -1 : 1;
+      return a.daysRemaining - b.daysRemaining;
+    });
     setKillable(found);
     localStorage.setItem(KILLABLE_CACHE_KEY, JSON.stringify({ ts: Date.now(), data: found }));
     setKillableLoading(false);

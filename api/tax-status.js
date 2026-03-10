@@ -13,41 +13,53 @@ const SEL_HAS_LIFE_INSURANCE = "0x866ec147";
 const SEL_AUDIT_DUE_TIMESTAMP = "0x608cf06b";
 const SEL_GET_CURRENT_TAX_RATE = "0x64f53f2e";
 
+// Max calls per JSON-RPC batch (Alchemy limits ~100-150)
+const MAX_BATCH = 100;
+const MAX_RETRIES = 2;
+
 function pad32(tokenId) {
   return BigInt(tokenId).toString(16).padStart(64, "0");
 }
 
-async function ethCall(data) {
-  const res = await fetch(getRPC(), {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      jsonrpc: "2.0",
-      method: "eth_call",
-      params: [{ to: GAME_CONTRACT, data }, "latest"],
-      id: 1,
-    }),
-  });
-  const json = await res.json();
-  if (json.error) throw new Error(json.error.message);
-  return json.result;
-}
-
 async function ethBatchCall(calls) {
+  const rpc = getRPC();
   const body = calls.map((data, i) => ({
     jsonrpc: "2.0",
     method: "eth_call",
     params: [{ to: GAME_CONTRACT, data }, "latest"],
     id: i + 1,
   }));
-  const res = await fetch(getRPC(), {
+  const res = await fetch(rpc, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
   });
+  if (!res.ok) throw new Error(`RPC ${res.status}`);
   const json = await res.json();
-  // Sort by id to maintain order
+  if (!Array.isArray(json)) throw new Error("RPC returned non-array");
   return json.sort((a, b) => a.id - b.id).map((r) => r.result);
+}
+
+async function ethBatchCallWithRetry(calls) {
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      return await ethBatchCall(calls);
+    } catch (e) {
+      if (attempt === MAX_RETRIES) throw e;
+      await new Promise((r) => setTimeout(r, 200 * (attempt + 1)));
+    }
+  }
+}
+
+// Split a large set of calls into chunks and execute sequentially
+async function ethBatchCallChunked(calls) {
+  const results = [];
+  for (let i = 0; i < calls.length; i += MAX_BATCH) {
+    const chunk = calls.slice(i, i + MAX_BATCH);
+    const chunkResults = await ethBatchCallWithRetry(chunk);
+    results.push(...chunkResults);
+  }
+  return results;
 }
 
 export default async function handler(req, res) {
@@ -67,23 +79,29 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: "Max 200 tokens per request" });
     }
 
-    // Build batch: currentEpoch + taxRate + lastEpochPaid/insurance/auditDue per token
-    const calls = [SEL_CURRENT_EPOCH, SEL_GET_CURRENT_TAX_RATE];
+    // Get epoch + tax rate first (small batch, reliable)
+    const globalResults = await ethBatchCallWithRetry([
+      SEL_CURRENT_EPOCH,
+      SEL_GET_CURRENT_TAX_RATE,
+    ]);
+    const currentEpoch = parseInt(globalResults[0], 16);
+    const taxRateWei = BigInt(globalResults[1]);
+    const taxRateEth = Number(taxRateWei) / 1e18;
+
+    // Build per-token calls
+    const tokenCalls = [];
     for (const id of tokenIds) {
-      calls.push(SEL_LAST_EPOCH_PAID + pad32(id));
-      calls.push(SEL_HAS_LIFE_INSURANCE + pad32(id));
-      calls.push(SEL_AUDIT_DUE_TIMESTAMP + pad32(id));
+      tokenCalls.push(SEL_LAST_EPOCH_PAID + pad32(id));
+      tokenCalls.push(SEL_HAS_LIFE_INSURANCE + pad32(id));
+      tokenCalls.push(SEL_AUDIT_DUE_TIMESTAMP + pad32(id));
     }
 
-    const results = await ethBatchCall(calls);
-
-    const currentEpoch = parseInt(results[0], 16);
-    const taxRateWei = BigInt(results[1]);
-    const taxRateEth = Number(taxRateWei) / 1e18;
+    // Execute in safe chunks
+    const results = await ethBatchCallChunked(tokenCalls);
 
     const citizens = [];
     for (let i = 0; i < tokenIds.length; i++) {
-      const offset = 2 + i * 3;
+      const offset = i * 3;
       const lastPaid = parseInt(results[offset], 16);
       const insured = parseInt(results[offset + 1], 16) === 1;
       const auditDueTs = parseInt(results[offset + 2], 16);
@@ -113,6 +131,6 @@ export default async function handler(req, res) {
     });
   } catch (e) {
     console.error("Tax status error:", e);
-    return res.status(500).json({ error: "Failed to fetch tax status" });
+    return res.status(500).json({ error: "Failed to fetch tax status", detail: e.message });
   }
 }
