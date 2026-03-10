@@ -102,8 +102,9 @@ export default function KillFeed({ mobile }) {
         if (!res.ok) continue;
         const batch = await res.json();
         for (const c of batch.citizens) {
-          if (c.status === "DELINQUENT" && c.auditDue && c.auditDue <= nowSec) {
-            found.push(c);
+          if (c.status === "DELINQUENT") {
+            const killable = c.auditDue && c.auditDue <= nowSec;
+            found.push({ ...c, killable });
           }
         }
       } catch {}
@@ -630,9 +631,14 @@ export default function KillFeed({ mobile }) {
               </button>
             )}
             {killable.length > 0 && !killableLoading && (
-              <span style={{ fontSize: mobile ? 14 : 18, fontWeight: 900, fontFamily: `"${BODY_FONT}", monospace`, color: "#ff0000" }}>
-                {killable.length} KILLABLE
-              </span>
+              <div style={{ display: "flex", gap: 12, fontFamily: `"${BODY_FONT}", monospace` }}>
+                <span style={{ fontSize: mobile ? 14 : 18, fontWeight: 900, color: "#ff0000" }}>
+                  {killable.filter((c) => c.killable).length} KILLABLE
+                </span>
+                <span style={{ fontSize: mobile ? 14 : 18, fontWeight: 900, color: "#cc0000" }}>
+                  {killable.filter((c) => !c.killable).length} DELINQUENT
+                </span>
+              </div>
             )}
           </div>
 
@@ -651,7 +657,7 @@ export default function KillFeed({ mobile }) {
                     gap: mobile ? 8 : 16,
                     border: `2px solid ${fg}`,
                     padding: mobile ? "8px 10px" : "10px 16px",
-                    background: "#ff000010",
+                    background: c.killable ? "#ff000015" : "transparent",
                   }}
                 >
                   <div style={{
@@ -668,11 +674,11 @@ export default function KillFeed({ mobile }) {
                       fontFamily: `"${BODY_FONT}", monospace`,
                       opacity: 0.6,
                     }}>
-                      {Math.abs(c.daysRemaining)}d OVERDUE — AUDIT EXPIRED
+                      {Math.abs(c.daysRemaining)}d OVERDUE{c.killable ? " — AUDIT EXPIRED" : c.auditDue ? " — AUDIT PENDING" : " — NO AUDIT YET"}
                     </div>
                   </div>
                   <div style={{
-                    background: "#ff0000",
+                    background: c.killable ? "#ff0000" : "#cc0000",
                     color: "#fff",
                     padding: mobile ? "4px 8px" : "6px 12px",
                     fontSize: mobile ? 10 : 12,
@@ -681,7 +687,7 @@ export default function KillFeed({ mobile }) {
                     letterSpacing: 1,
                     flexShrink: 0,
                   }}>
-                    KILLABLE
+                    {c.killable ? "KILLABLE" : "DELINQUENT"}
                   </div>
                 </div>
               ))}
