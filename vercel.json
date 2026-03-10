@@ -8,6 +8,9 @@
     },
     "api/tax-status.js": {
       "maxDuration": 60
+    },
+    "api/killable-scan.js": {
+      "maxDuration": 60
     }
   },
   "rewrites": [

@@ -45,7 +45,6 @@ export default function KillFeed({ mobile }) {
   const [killable, setKillable] = useState([]);
   const [killableLoading, setKillableLoading] = useState(false);
   const [killableProgress, setKillableProgress] = useState("");
-  const killableCancelRef = useRef(false);
 
   const bg = colors.bg;
   const fg = colors.fg;
@@ -81,52 +80,17 @@ export default function KillFeed({ mobile }) {
 
   const scanKillable = async () => {
     setKillableLoading(true);
-    killableCancelRef.current = false;
-    const found = [];
-    const batchSize = 100;
-    const maxRetries = 2;
-    const nowSec = Math.floor(Date.now() / 1000);
-
-    for (let start = 1; start <= TOTAL_CITIZENS; start += batchSize) {
-      if (killableCancelRef.current) break;
-      const end = Math.min(start + batchSize - 1, TOTAL_CITIZENS);
-      const tokenIds = [];
-      for (let i = start; i <= end; i++) tokenIds.push(i);
-      setKillableProgress(`SCANNING ${start}-${end} / ${TOTAL_CITIZENS} (${found.length} found)`);
-
-      let success = false;
-      for (let attempt = 0; attempt <= maxRetries && !success; attempt++) {
-        try {
-          const res = await fetch("/api/tax-status", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ tokenIds }),
-          });
-          if (!res.ok) {
-            if (attempt < maxRetries) { await new Promise((r) => setTimeout(r, 500 * (attempt + 1))); continue; }
-            break;
-          }
-          const batch = await res.json();
-          for (const c of batch.citizens) {
-            if (c.status === "DELINQUENT") {
-              const killable = c.auditDue && c.auditDue <= nowSec;
-              found.push({ ...c, killable });
-            }
-          }
-          success = true;
-        } catch {
-          if (attempt < maxRetries) await new Promise((r) => setTimeout(r, 500 * (attempt + 1)));
-        }
-      }
-      await new Promise((r) => setTimeout(r, 250));
+    setKillableProgress("SCANNING ALL 6969 CITIZENS...");
+    try {
+      const res = await fetch("/api/killable-scan");
+      if (!res.ok) throw new Error(`Scan failed: ${res.status}`);
+      const data = await res.json();
+      const found = [...data.killable, ...data.delinquent];
+      setKillable(found);
+      localStorage.setItem(KILLABLE_CACHE_KEY, JSON.stringify({ ts: Date.now(), data: found }));
+    } catch (e) {
+      console.error(e);
     }
-
-    found.sort((a, b) => {
-      if (a.killable !== b.killable) return a.killable ? -1 : 1;
-      return a.daysRemaining - b.daysRemaining;
-    });
-    setKillable(found);
-    localStorage.setItem(KILLABLE_CACHE_KEY, JSON.stringify({ ts: Date.now(), data: found }));
     setKillableLoading(false);
     setKillableProgress("");
   };
@@ -610,7 +574,7 @@ export default function KillFeed({ mobile }) {
 
           <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
             <button
-              onClick={() => { killableCancelRef.current = false; scanKillable(); playStaticBuzz(); }}
+              onClick={() => { scanKillable(); playStaticBuzz(); }}
               disabled={killableLoading}
               style={{
                 background: killableLoading ? fg : "transparent",
@@ -625,23 +589,6 @@ export default function KillFeed({ mobile }) {
             >
               {killableLoading ? killableProgress : "SCAN ALL CITIZENS"}
             </button>
-            {killableLoading && (
-              <button
-                onClick={() => { killableCancelRef.current = true; }}
-                style={{
-                  background: "transparent",
-                  color: fg,
-                  border: `2px solid ${fg}`,
-                  padding: "8px 16px",
-                  fontSize: mobile ? 12 : 14,
-                  fontWeight: 500,
-                  cursor: "pointer",
-                  fontFamily: `"${BODY_FONT}", monospace`,
-                }}
-              >
-                CANCEL
-              </button>
-            )}
             {killable.length > 0 && !killableLoading && (
               <div style={{ display: "flex", gap: 12, fontFamily: `"${BODY_FONT}", monospace` }}>
                 <span style={{ fontSize: mobile ? 14 : 18, fontWeight: 900, color: "#ff0000" }}>
