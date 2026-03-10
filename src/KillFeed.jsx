@@ -36,6 +36,25 @@ function saveCache(data) {
   localStorage.setItem(KILL_CACHE_KEY, JSON.stringify({ ts: Date.now(), data }));
 }
 
+function Countdown({ targetTs, mobile }) {
+  const [now, setNow] = useState(Math.floor(Date.now() / 1000));
+  useEffect(() => {
+    const id = setInterval(() => setNow(Math.floor(Date.now() / 1000)), 1000);
+    return () => clearInterval(id);
+  }, []);
+  const diff = targetTs - now;
+  if (diff <= 0) return <span style={{ color: "#ff0000", fontWeight: 900 }}>KILLABLE NOW</span>;
+  const h = Math.floor(diff / 3600);
+  const m = Math.floor((diff % 3600) / 60);
+  const s = diff % 60;
+  const pad = (n) => String(n).padStart(2, "0");
+  return (
+    <span style={{ fontFamily: '"DeptBody", monospace', fontWeight: 700, letterSpacing: 1, fontSize: mobile ? 12 : 14 }}>
+      {pad(h)}:{pad(m)}:{pad(s)}
+    </span>
+  );
+}
+
 export default function KillFeed({ mobile, defaultTab }) {
   const { colors } = useTheme();
   const { playClick, playStaticBuzz } = useSound();
@@ -804,7 +823,16 @@ export default function KillFeed({ mobile, defaultTab }) {
                       fontFamily: `"${BODY_FONT}", monospace`,
                       opacity: 0.6,
                     }}>
-                      {Math.abs(c.daysRemaining)}d OVERDUE{c.killable ? " — AUDIT EXPIRED" : c.auditDue ? " — AUDIT PENDING" : " — NO AUDIT YET"}
+                      {Math.abs(c.daysRemaining)}d OVERDUE
+                    </div>
+                    <div style={{ marginTop: 2 }}>
+                      {c.killable ? (
+                        <Countdown targetTs={0} mobile={mobile} />
+                      ) : c.auditDue ? (
+                        <Countdown targetTs={c.auditDue} mobile={mobile} />
+                      ) : (
+                        <span style={{ fontSize: mobile ? 11 : 13, fontFamily: `"${BODY_FONT}", monospace`, opacity: 0.4 }}>NO AUDIT YET</span>
+                      )}
                     </div>
                   </div>
                   <a
@@ -823,7 +851,7 @@ export default function KillFeed({ mobile, defaultTab }) {
                       textDecoration: "none",
                       cursor: "pointer",
                     }}>
-                    {c.killable ? "KILLABLE" : "DELINQUENT"}
+                    {c.killable ? "KILL" : "VIEW"}
                   </a>
                 </div>
               ))}
