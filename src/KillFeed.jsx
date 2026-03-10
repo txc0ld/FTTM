@@ -836,7 +836,7 @@ export default function KillFeed({ mobile, defaultTab }) {
                     </div>
                   </div>
                   <a
-                    href={`https://www.deptofdeath.xyz/directory/${c.tokenId}`}
+                    href="https://www.deptofdeath.xyz/directory"
                     target="_blank"
                     rel="noopener noreferrer"
                     style={{
