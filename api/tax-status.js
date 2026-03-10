@@ -1,5 +1,10 @@
-const RPC = "https://eth.llamarpc.com";
+const LLAMA_RPC = "https://eth.llamarpc.com";
 const GAME_CONTRACT = "0xa448c7f618087dda1a3b128cad8a424fbae4b71f";
+
+function getRPC() {
+  const key = process.env.ALCHEMY_API_KEY;
+  return key ? `https://eth-mainnet.g.alchemy.com/v3/${key}` : LLAMA_RPC;
+}
 
 // Function selectors
 const SEL_CURRENT_EPOCH = "0x76671808";
@@ -13,7 +18,7 @@ function pad32(tokenId) {
 }
 
 async function ethCall(data) {
-  const res = await fetch(RPC, {
+  const res = await fetch(getRPC(), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -35,7 +40,7 @@ async function ethBatchCall(calls) {
     params: [{ to: GAME_CONTRACT, data }, "latest"],
     id: i + 1,
   }));
-  const res = await fetch(RPC, {
+  const res = await fetch(getRPC(), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),

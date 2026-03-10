@@ -5,6 +5,9 @@
     },
     "api/wallet-nfts.js": {
       "maxDuration": 30
+    },
+    "api/tax-status.js": {
+      "maxDuration": 30
     }
   },
   "rewrites": [
