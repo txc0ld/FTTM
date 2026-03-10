@@ -7,7 +7,9 @@ const BODY_FONT = "DeptBody";
 const LEADERBOARD_API = "https://dt-leaderboard-livid.vercel.app/api/leaderboard";
 const LS_KEY = "dt_boneyard_cache";
 const KILL_CACHE_KEY = "dt_kill_leaderboard";
+const KILLABLE_CACHE_KEY = "dt_killable_cache";
 const FIVE_MIN = 5 * 60 * 1000;
+const TOTAL_CITIZENS = 6969;
 
 function shortAddr(addr) {
   if (!addr) return "UNKNOWN";
@@ -40,6 +42,10 @@ export default function KillFeed({ mobile }) {
   const [tab, setTab] = useState("KILLS");
   const [viewMode, setViewMode] = useState("LEADERBOARD");
   const [paused, setPaused] = useState(false);
+  const [killable, setKillable] = useState([]);
+  const [killableLoading, setKillableLoading] = useState(false);
+  const [killableProgress, setKillableProgress] = useState("");
+  const killableCancelRef = useRef(false);
 
   const bg = colors.bg;
   const fg = colors.fg;
@@ -63,6 +69,53 @@ export default function KillFeed({ mobile }) {
       setError(e.message || "Failed to fetch leaderboard");
     }
     setLoading(false);
+  };
+
+  // Load killable cache on mount
+  useEffect(() => {
+    try {
+      const raw = JSON.parse(localStorage.getItem(KILLABLE_CACHE_KEY));
+      if (raw && raw.ts && Date.now() - raw.ts < FIVE_MIN) setKillable(raw.data);
+    } catch {}
+  }, []);
+
+  const scanKillable = async () => {
+    setKillableLoading(true);
+    killableCancelRef.current = false;
+    const found = [];
+    const batchSize = 200;
+    const nowSec = Math.floor(Date.now() / 1000);
+
+    for (let start = 1; start <= TOTAL_CITIZENS; start += batchSize) {
+      if (killableCancelRef.current) break;
+      const end = Math.min(start + batchSize - 1, TOTAL_CITIZENS);
+      const tokenIds = [];
+      for (let i = start; i <= end; i++) tokenIds.push(i);
+      setKillableProgress(`SCANNING ${start}-${end} / ${TOTAL_CITIZENS}`);
+
+      try {
+        const res = await fetch("/api/tax-status", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ tokenIds }),
+        });
+        if (!res.ok) continue;
+        const batch = await res.json();
+        for (const c of batch.citizens) {
+          if (c.status === "DELINQUENT" && c.auditDue && c.auditDue <= nowSec) {
+            found.push(c);
+          }
+        }
+      } catch {}
+      // Small delay between batches
+      await new Promise((r) => setTimeout(r, 150));
+    }
+
+    found.sort((a, b) => a.daysRemaining - b.daysRemaining);
+    setKillable(found);
+    localStorage.setItem(KILLABLE_CACHE_KEY, JSON.stringify({ ts: Date.now(), data: found }));
+    setKillableLoading(false);
+    setKillableProgress("");
   };
 
   if (!data && loading) {
@@ -176,7 +229,7 @@ export default function KillFeed({ mobile }) {
 
       {/* TABS: KILLS / AUDITS */}
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-        {["KILLS", "AUDITS"].map((t) => (
+        {["KILLS", "AUDITS", "KILLABLE"].map((t) => (
           <button
             key={t}
             onClick={() => { setTab(t); setViewMode("LEADERBOARD"); playClick(); }}
@@ -195,8 +248,8 @@ export default function KillFeed({ mobile }) {
           </button>
         ))}
         <div style={{ flex: 1 }} />
-        {/* Sub-view toggle */}
-        {["LEADERBOARD", "RECENT"].map((v) => (
+        {/* Sub-view toggle (only for KILLS/AUDITS) */}
+        {tab !== "KILLABLE" && ["LEADERBOARD", "RECENT"].map((v) => (
           <button
             key={v}
             onClick={() => { setViewMode(v); playClick(); }}
@@ -532,6 +585,114 @@ export default function KillFeed({ mobile }) {
               </div>
             ))}
           </div>
+        </div>
+      )}
+
+      {/* ═══ KILLABLE TAB ═══ */}
+      {tab === "KILLABLE" && (
+        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          <div style={{ fontSize: mobile ? 12 : 14, opacity: 0.5, fontFamily: `"${BODY_FONT}", monospace` }}>
+            CITIZENS WITH DELINQUENT TAX + EXPIRED AUDIT — READY TO BE ELIMINATED
+          </div>
+
+          <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+            <button
+              onClick={() => { killableCancelRef.current = false; scanKillable(); playStaticBuzz(); }}
+              disabled={killableLoading}
+              style={{
+                background: killableLoading ? fg : "transparent",
+                color: killableLoading ? bg : fg,
+                border: `2px solid ${fg}`,
+                padding: "8px 20px",
+                fontSize: mobile ? 14 : 16,
+                fontWeight: 700,
+                cursor: killableLoading ? "wait" : "pointer",
+                fontFamily: `"${HEADING_FONT}", monospace`,
+              }}
+            >
+              {killableLoading ? killableProgress : "SCAN ALL CITIZENS"}
+            </button>
+            {killableLoading && (
+              <button
+                onClick={() => { killableCancelRef.current = true; }}
+                style={{
+                  background: "transparent",
+                  color: fg,
+                  border: `2px solid ${fg}`,
+                  padding: "8px 16px",
+                  fontSize: mobile ? 12 : 14,
+                  fontWeight: 500,
+                  cursor: "pointer",
+                  fontFamily: `"${BODY_FONT}", monospace`,
+                }}
+              >
+                CANCEL
+              </button>
+            )}
+            {killable.length > 0 && !killableLoading && (
+              <span style={{ fontSize: mobile ? 14 : 18, fontWeight: 900, fontFamily: `"${BODY_FONT}", monospace`, color: "#ff0000" }}>
+                {killable.length} KILLABLE
+              </span>
+            )}
+          </div>
+
+          {killable.length > 0 && (
+            <div style={{
+              display: "grid",
+              gridTemplateColumns: mobile ? "1fr" : "1fr 1fr",
+              gap: 4,
+            }}>
+              {killable.map((c) => (
+                <div
+                  key={c.tokenId}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: mobile ? 8 : 16,
+                    border: `2px solid ${fg}`,
+                    padding: mobile ? "8px 10px" : "10px 16px",
+                    background: "#ff000010",
+                  }}
+                >
+                  <div style={{
+                    fontSize: mobile ? 18 : 24,
+                    fontWeight: 900,
+                    fontFamily: `"${BODY_FONT}", monospace`,
+                    minWidth: mobile ? 60 : 80,
+                  }}>
+                    #{c.tokenId}
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{
+                      fontSize: mobile ? 11 : 13,
+                      fontFamily: `"${BODY_FONT}", monospace`,
+                      opacity: 0.6,
+                    }}>
+                      {Math.abs(c.daysRemaining)}d OVERDUE — AUDIT EXPIRED
+                    </div>
+                  </div>
+                  <div style={{
+                    background: "#ff0000",
+                    color: "#fff",
+                    padding: mobile ? "4px 8px" : "6px 12px",
+                    fontSize: mobile ? 10 : 12,
+                    fontWeight: 700,
+                    fontFamily: `"${BODY_FONT}", monospace`,
+                    letterSpacing: 1,
+                    flexShrink: 0,
+                  }}>
+                    KILLABLE
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {killable.length === 0 && !killableLoading && (
+            <div style={{ fontSize: 14, opacity: 0.4, fontFamily: `"${BODY_FONT}", monospace`, padding: 40, textAlign: "center", border: `2px dashed ${fg}` }}>
+              CLICK SCAN TO CHECK ALL {TOTAL_CITIZENS} CITIZENS
+            </div>
+          )}
         </div>
       )}
 
